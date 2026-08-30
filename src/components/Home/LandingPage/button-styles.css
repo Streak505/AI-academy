@@ -1,0 +1,43 @@
+.ai-button,
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.ai-button {
+  background-color: #0f766e;
+  color: #ffffff;
+}
+
+.ai-button:hover,
+.button-primary:hover {
+  background-color: #115e59;
+}
+
+.ai-button-muted {
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+}
+
+.ai-button-muted:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.ai-button-icon {
+  border-radius: 9999px;
+  background-color: #115e59;
+  color: #ffffff;
+  padding: 0.75rem;
+}
+
+.ai-button-icon:hover {
+  background-color: #0f1390;
+}
