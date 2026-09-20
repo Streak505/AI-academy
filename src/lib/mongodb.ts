@@ -1,1 +1,1 @@
-export { connectToDatabase } from "./db";
+export { connectDB, connectToDatabase, getMongoUri } from "./db";

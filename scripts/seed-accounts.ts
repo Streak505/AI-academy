@@ -32,7 +32,7 @@ async function seedAccounts() {
       {
         $set: {
           name: account.name,
-          passwordHash: hashPassword(account.password),
+          passwordHash: await hashPassword(account.password),
           role: account.role,
           isActive: true,
         },

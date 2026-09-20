@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Review } from "@/models/Review";
+import { Course } from "@/models/Course";
+import { Enrollment } from "@/models/Enrollment";
 import { isValidRating, isValidString } from "@/lib/validations";
 import { getCurrentUser } from "@/lib/user-auth";
 import { isValidObjectId } from "@/lib/validations";
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, message: "Reviewer name is required." }, { status: 400 });
     }
 
-    if (!body?.course || typeof body.course !== "string") {
+    if (!body?.course || typeof body.course !== "string" || !isValidObjectId(body.course)) {
       return Response.json({ success: false, message: "Course reference is required." }, { status: 400 });
     }
 
@@ -91,8 +93,17 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, message: "Review text is required." }, { status: 400 });
     }
 
+    const course = await Course.findById(body.course).select("_id").lean();
+    if (!course) return Response.json({ success: false, message: "Course not found." }, { status: 404 });
+    const enrollment = await Enrollment.findOne({ student: user.id, course: body.course, status: { $in: ["Active", "Completed"] } }).select("_id").lean();
+    if (!enrollment) return Response.json({ success: false, message: "You can only review a course you are enrolled in." }, { status: 403 });
+    const existingReview = await Review.exists({ student: user.id, course: body.course });
+    if (existingReview) return Response.json({ success: false, message: "You have already reviewed this course." }, { status: 409 });
+
     const review = await Review.create({
-      ...body,
+      name: String(body.name).trim(),
+      course: body.course,
+      review: String(body.review).trim(),
       student: user.id,
       isPublished: false,
       isFeatured: false,

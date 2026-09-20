@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/user-auth";
 import { Course } from "@/models/Course";
 import { Quiz } from "@/models/Quiz";
 import { User } from "@/models/User";
+import { Enrollment } from "@/models/Enrollment";
 import { isValidObjectId, isValidString } from "@/lib/validations";
 
 function normalizeQuestions(questions: unknown): Array<{ text: string; options: string[]; correctAnswer: number; explanation?: string }> {
@@ -46,9 +47,33 @@ export async function GET(request: NextRequest) {
       return Response.json({ success: false, message: "A valid course id is required." }, { status: 400 });
     }
 
+    const user = await getCurrentUser();
+    if (!user) return Response.json({ success: false, message: "Please sign in first." }, { status: 401 });
+
     await connectToDatabase();
+    const course = await Course.findById(courseId).lean();
+    if (!course) return Response.json({ success: false, message: "Course not found." }, { status: 404 });
+
+    if (user.role === "STUDENT") {
+      const enrollment = await Enrollment.findOne({ student: user.id, course: courseId, status: { $in: ["Active", "Completed"] } }).lean();
+      if (!enrollment) return Response.json({ success: false, message: "You must be enrolled in this course." }, { status: 403 });
+    } else if (user.role === "INSTRUCTOR") {
+      const account = await User.findById(user.id).select("instructorProfile").lean();
+      if (!account?.instructorProfile || String(course.instructor) !== String(account.instructorProfile)) {
+        return Response.json({ success: false, message: "You can only access quizzes for your own courses." }, { status: 403 });
+      }
+    } else if (user.role !== "ADMIN") {
+      return Response.json({ success: false, message: "Forbidden." }, { status: 403 });
+    }
+
     const quizzes = await Quiz.find({ course: courseId, isPublished: true }).sort({ createdAt: -1 }).lean();
-    return Response.json({ success: true, data: quizzes });
+    const data = user.role === "ADMIN" || user.role === "INSTRUCTOR"
+      ? quizzes
+      : quizzes.map((quiz) => ({
+          ...quiz,
+          questions: quiz.questions.map(({ correctAnswer: _correctAnswer, explanation: _explanation, ...question }: { correctAnswer?: number; explanation?: string; [key: string]: unknown }) => question),
+        }));
+    return Response.json({ success: true, data });
   } catch (error) {
     console.error("GET /api/quizzes failed:", error);
     return Response.json({ success: false, message: "Unable to load quizzes." }, { status: 500 });

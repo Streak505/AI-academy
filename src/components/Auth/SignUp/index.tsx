@@ -73,6 +73,9 @@ const SignUp = () => {
             placeholder="Password"
             name="password"
             required
+            minLength={8}
+            pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+            title="Use at least 8 characters, including at least one letter and one number."
             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
         </div>

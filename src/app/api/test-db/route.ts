@@ -1,7 +1,10 @@
 import { connectToDatabase } from "@/lib/db";
+import { requireAdminResponse } from "@/lib/admin-auth";
 
 export async function GET() {
   try {
+    const unauthorized = await requireAdminResponse();
+    if (unauthorized) return unauthorized;
     await connectToDatabase();
 
     return Response.json({
