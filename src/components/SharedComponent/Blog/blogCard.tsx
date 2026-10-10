@@ -1,4 +1,3 @@
-import React, { FC } from "react";
 import Image from "next/image";
 import { Blog } from "@/types/blog";
 import { format } from "date-fns";
@@ -6,7 +5,7 @@ import Link from "next/link";
 import { getImagePrefix } from "@/utils/util";
 
 const BlogCard = ({ blog }: { blog: Blog }) => {
-    const { title, coverImage, excerpt, date, slug } = blog;
+    const { title, coverImage, date, slug } = blog;
     return (
         <>
             <Link href={`/blog/${slug}`} className="group mb-10 flex flex-col gap-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:flex-row md:items-center">

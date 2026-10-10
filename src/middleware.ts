@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
 
-const publicPaths = ["/", "/signin", "/signup", "/admin/login", "/logout", "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/test-db"];
+const publicPaths = [
+  "/",
+  "/signin",
+  "/signup",
+  "/admin/login",
+  "/logout",
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/refresh",
+  "/api/auth/google",
+  "/api/auth/verify-email",
+  "/api/auth/resend-verification",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+  "/api/test-db",
+];
 
 function isPublicPath(pathname: string) {
-  return publicPaths.some((publicPath) => pathname === publicPath || pathname.startsWith("/api/"));
+  return publicPaths.some((publicPath) => pathname === publicPath || pathname.startsWith("/api/auth/"));
 }
 
 export async function middleware(request: NextRequest) {
@@ -31,11 +46,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (pathname.startsWith("/instructor") && payload.role !== "INSTRUCTOR") {
+  if (pathname.startsWith("/instructor") && payload.role !== "INSTRUCTOR" && payload.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (pathname.startsWith("/student") && payload.role !== "STUDENT") {
+  if (pathname.startsWith("/student") && payload.role !== "STUDENT" && payload.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -43,5 +58,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  runtime: "nodejs",
   matcher: ["/admin/:path*", "/student/:path*", "/instructor/:path*", "/profile/:path*", "/settings/:path*"],
 };

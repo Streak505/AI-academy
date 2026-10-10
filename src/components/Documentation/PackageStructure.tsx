@@ -1,9 +1,4 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
-import Image from "next/image";
-import tline from "/public/images/svgs/T-Line.svg";
-import t_half_line from "/public/images/svgs/T-half_line.svg";
-import straight_line from "/public/images/svgs/straight_group.svg";
-import small_straight_line from "/public/images/svgs/smal_straight_line.svg";
 
 export const PackageStructure = () => {
   const Counts = [
@@ -75,7 +70,7 @@ export const PackageStructure = () => {
                         </div>
                         <div className="flex">
                           <div className="flex flex-col justify-between gap-2 mt-2">
-                            {Counts.slice(0, 22).map((item) => {
+                            {Counts.slice(0, 22).map(() => {
                               return <p className="text-xl text-black">|</p>;
                             })}
                           </div>
@@ -93,7 +88,7 @@ export const PackageStructure = () => {
                               </div>
                               <div className="flex">
                                 <div className="flex flex-col justify-between gap-2 mt-2">
-                                  {Counts.slice(0, 16).map((item) => {
+                                  {Counts.slice(0, 16).map(() => {
                                     return (
                                       <p className="text-xl text-black">|</p>
                                     );
@@ -117,7 +112,7 @@ export const PackageStructure = () => {
                                     <div className="flex">
                                       <div className="flex flex-col justify-between gap-2 mt-2">
                                         {Counts.slice(0, 5).map(
-                                          (item, index) => {
+                                          (_item, index) => {
                                             return (
                                               <p
                                                 key={index}
@@ -147,7 +142,7 @@ export const PackageStructure = () => {
                                           <div className="flex">
                                             <div className="flex flex-col justify-between gap-1 mt-2">
                                               {Counts.slice(0, 2).map(
-                                                (item) => {
+                                                () => {
                                                   return (
                                                     <p className="text-xl text-black">
                                                       |
@@ -228,7 +223,7 @@ export const PackageStructure = () => {
                                     </div>
                                     <div className="flex">
                                       <div className="flex flex-col justify-between gap-2 mt-2">
-                                        {Counts.slice(0, 2).map((item) => {
+                                        {Counts.slice(0, 2).map(() => {
                                           return (
                                             <p className="text-xl text-black">
                                               |
@@ -291,7 +286,7 @@ export const PackageStructure = () => {
                                     </div>
                                     <div className="flex">
                                       <div className="flex flex-col justify-between gap-2 mt-2">
-                                        {Counts.slice(0, 1).map((item) => {
+                                        {Counts.slice(0, 1).map(() => {
                                           return (
                                             <p className="text-xl text-black">
                                               |

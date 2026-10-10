@@ -239,7 +239,7 @@ async function seedDevelopmentData() {
   ]);
 
   const lessonSets = await Promise.all(
-    courses.map((course, index) =>
+    courses.map((course) =>
       Lesson.insertMany([
         {
           course: course._id,

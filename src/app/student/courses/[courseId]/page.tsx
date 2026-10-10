@@ -58,8 +58,6 @@ export default async function StudentCourseLearningPage({ params }: { params: Pr
   }
 
   const { course, lessons, quizzes, progressInfo, currentLesson } = data;
-  const nextLesson = lessons.find((lesson: any) => !data.enrollment.completedLessons?.some((completed: any) => String(completed) === String(lesson._id))) || null;
-
   return (
     <main className="min-h-screen bg-slate-50 px-4 pb-20 pt-30">
       <div className="mx-auto max-w-7xl">

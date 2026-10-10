@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import { normalizeEmail, setAuthCookies, signAccessToken, signRefreshToken, toSafeUser, verifyPassword } from "@/lib/auth";
 import { User } from "@/models/User";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -13,11 +14,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Email and password are required." }, { status: 400 });
     }
 
-    await connectToDatabase();
+    const rateLimit = checkRateLimit(`admin-login:${email}`, 5, 15 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json({ success: false, message: "Too many admin login attempts. Please wait a moment and try again." }, { status: 429 });
+    }
+
+    await connectDB();
     const user = await User.findOne({ email, role: "ADMIN", isActive: true, status: { $ne: "SUSPENDED" } }).select("+passwordHash");
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       return NextResponse.json({ success: false, message: "Invalid admin credentials." }, { status: 401 });
     }
+
+    if (user.status === "DISABLED" || !user.emailVerified) {
+      return NextResponse.json({ success: false, message: "Admin account is not active." }, { status: 403 });
+    }
+
+    user.lastLoginAt = new Date();
+    await user.save();
 
     const accessToken = await signAccessToken({ sub: String(user._id), role: "ADMIN", email: user.email });
     const refreshToken = await signRefreshToken({ sub: String(user._id), role: "ADMIN", email: user.email });

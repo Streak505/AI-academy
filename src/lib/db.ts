@@ -17,7 +17,21 @@ const cached = globalWithMongoose.mongooseCache ?? {
 globalWithMongoose.mongooseCache = cached;
 
 export function getMongoUri() {
-  return process.env.MONGODB_URI?.trim() ?? "mongodb://127.0.0.1:27017/aiacademy";
+  const uri = process.env.MONGODB_URI?.trim();
+
+  if (!uri) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("MONGODB_URI must be configured in production.");
+    }
+
+    return "mongodb://127.0.0.1:27017/aiacademy";
+  }
+
+  if (!/^mongodb(?:\+srv)?:\/\//i.test(uri)) {
+    throw new Error("MONGODB_URI must use the mongodb:// or mongodb+srv:// scheme.");
+  }
+
+  return uri;
 }
 
 export async function connectDB() {
@@ -28,7 +42,11 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(uri).catch((error) => {
+    cached.promise = mongoose.connect(uri, {
+      dbName: "aiacademy",
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+    }).catch((error) => {
       cached.promise = null;
       throw error;
     });

@@ -33,7 +33,7 @@ export default function EditApplicationPage() {
         if (data.success && data.data?.length > 0) {
           setForm(data.data[0]);
         }
-      } catch (err) {
+      } catch (_err) {
         setError("Failed to load application");
       } finally {
         setIsLoading(false);

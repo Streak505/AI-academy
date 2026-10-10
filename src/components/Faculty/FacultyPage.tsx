@@ -1,10 +1,10 @@
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { connectToDatabase } from "@/lib/db";
-import { Instructor } from "@/models/Instructor";
+import { Instructor as InstructorModel } from "@/models/Instructor";
 import { getImagePrefix } from "@/utils/util";
 
-type Instructor = {
+type FacultyMember = {
   _id: string;
   name: string;
   image?: string;
@@ -14,12 +14,12 @@ type Instructor = {
 };
 
 const FacultyPage = async () => {
-  let instructors: Instructor[] = [];
+  let instructors: FacultyMember[] = [];
   let hasError = false;
 
   try {
     await connectToDatabase();
-    instructors = (await Instructor.find({ isActive: true }).sort({ createdAt: -1 }).lean()).map((instructor) => ({
+    instructors = (await InstructorModel.find({ isActive: true }).sort({ createdAt: -1 }).lean()).map((instructor) => ({
       _id: String(instructor._id),
       name: instructor.name,
       image: instructor.image,

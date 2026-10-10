@@ -38,7 +38,7 @@ export default function EditCoursePage() {
         if (data.success && data.data?.length > 0) {
           setForm(data.data[0]);
         }
-      } catch (err) {
+      } catch (_err) {
         setError("Failed to load course");
       } finally {
         setIsLoading(false);

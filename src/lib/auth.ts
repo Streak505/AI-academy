@@ -1,9 +1,12 @@
 import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "crypto";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { User } from "@/models/User";
+import { connectDB } from "@/lib/db";
 
-export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT";
+export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "MODERATOR";
 
 export const AUTH_COOKIE_NAME = "ai_academy_auth";
 export const ADMIN_COOKIE_NAME = "ai_admin_session";
@@ -18,11 +21,20 @@ function getEnv(name: string) {
 }
 
 export function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
+  return String(value ?? "").trim().toLowerCase();
 }
 
 export function validatePassword(password: string) {
+  if (typeof password !== "string") return false;
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+}
+
+export function generateSecureToken(bytes = 32) {
+  return randomBytes(bytes).toString("hex");
+}
+
+export function hashToken(value: string) {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 export function hashPassword(password: string) {
@@ -30,7 +42,7 @@ export function hashPassword(password: string) {
 }
 
 export async function verifyPassword(password: string, passwordHash: string) {
-  if (!passwordHash) return false;
+  if (!passwordHash || !password) return false;
   return bcrypt.compare(password, passwordHash);
 }
 
@@ -38,11 +50,12 @@ type TokenPayload = {
   sub: string;
   role: Role;
   email?: string;
+  jti?: string;
   type: "access" | "refresh";
 };
 
 export async function signAccessToken({ sub, role, email }: { sub: string; role: Role; email?: string }) {
-  return jwt.sign({ sub, role, email, type: "access" }, getEnv("JWT_SECRET"), {
+  return jwt.sign({ sub, role, email, type: "access", jti: generateSecureToken(16) }, getEnv("JWT_SECRET"), {
     expiresIn: "15m",
     issuer: "aiacademy",
     algorithm: "HS256",
@@ -50,7 +63,7 @@ export async function signAccessToken({ sub, role, email }: { sub: string; role:
 }
 
 export async function signRefreshToken({ sub, role, email }: { sub: string; role: Role; email?: string }) {
-  return jwt.sign({ sub, role, email, type: "refresh" }, getEnv("JWT_REFRESH_SECRET"), {
+  return jwt.sign({ sub, role, email, type: "refresh", jti: generateSecureToken(16) }, getEnv("JWT_REFRESH_SECRET"), {
     expiresIn: "7d",
     issuer: "aiacademy",
     algorithm: "HS256",
@@ -88,9 +101,12 @@ export function toSafeUser(user: any) {
     name: user?.name ?? "",
     email: user?.email ?? "",
     role: (user?.role as Role) ?? "STUDENT",
-    avatar: user?.avatar ?? "",
+    avatar: user?.avatar ?? user?.profileImage ?? "",
     status: user?.status ?? (user?.isActive === false ? "SUSPENDED" : "ACTIVE"),
+    emailVerified: Boolean(user?.emailVerified),
+    authProvider: user?.authProvider ?? "local",
     createdAt: user?.createdAt ? new Date(user.createdAt).toISOString() : undefined,
+    updatedAt: user?.updatedAt ? new Date(user.updatedAt).toISOString() : undefined,
   };
 }
 
@@ -102,11 +118,20 @@ export async function getCurrentUser() {
   const payload = await verifyAccessToken(token);
   if (!payload?.sub) return null;
 
+  await connectDB();
+  const user = await User.findById(payload.sub).lean();
+  if (!user || user.isActive === false || user.status === "SUSPENDED" || user.status === "DISABLED") {
+    return null;
+  }
+
   return {
-    id: payload.sub,
-    email: payload.email ?? "",
-    role: (payload.role as Role) ?? "STUDENT",
-    name: "",
+    id: String(user._id),
+    email: user.email ?? "",
+    role: (user.role as Role) ?? "STUDENT",
+    name: user.name ?? "",
+    status: user.status ?? "ACTIVE",
+    emailVerified: Boolean(user.emailVerified),
+    authProvider: user.authProvider ?? "local",
   };
 }
 
@@ -123,6 +148,18 @@ export async function requireRole(role: Role | Role[]) {
     throw new Error("Forbidden.");
   }
   return user;
+}
+
+export async function requireAdmin() {
+  return requireRole("ADMIN");
+}
+
+export async function requireInstructor() {
+  return requireRole(["INSTRUCTOR", "ADMIN"]);
+}
+
+export async function requireStudent() {
+  return requireRole(["STUDENT", "INSTRUCTOR", "ADMIN", "MODERATOR"]);
 }
 
 export function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {

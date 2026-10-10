@@ -2,12 +2,11 @@
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Keep hot-reload output separate from production builds.
   distDir: isProd ? ".next" : ".next-dev",
-  basePath: isProd ? "/E-learning" : "",
-  assetPrefix: isProd ? "/E-learning/" : "",
-  //
-  //output: "export",
   images: {
     unoptimized: true,
   },

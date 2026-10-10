@@ -1,18 +1,8 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { User } from "@/models/User";
 import { connectDB } from "@/lib/db";
-import { getCurrentUser, requireRole } from "@/lib/user-auth";
-import {
-  ADMIN_COOKIE_NAME,
-  AUTH_COOKIE_NAME,
-  clearAuthCookies,
-  hashPassword,
-  normalizeEmail,
-  toSafeUser,
-  verifyAccessToken,
-  verifyPassword,
-} from "@/lib/auth";
+import { getCurrentUser, requireRole } from "@/lib/auth";
+import { ADMIN_COOKIE_NAME, AUTH_COOKIE_NAME, clearAuthCookies, hashPassword, normalizeEmail, toSafeUser, verifyAccessToken, verifyPassword } from "@/lib/auth";
 
 export { ADMIN_COOKIE_NAME, AUTH_COOKIE_NAME, clearAuthCookies, hashPassword, normalizeEmail, verifyPassword, verifyAccessToken, toSafeUser };
 
