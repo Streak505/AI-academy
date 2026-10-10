@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Event } from "@/models/Event";
 import { isValidString, isValidObjectId } from "@/lib/validations";
 import { requireAdminResponse } from "@/lib/admin-auth";
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const events = await eventsQuery.lean();
     return Response.json({ success: true, data: events });
   } catch (error) {
-    console.error("GET /api/events failed:", error);
+    logMongoError("GET /api/events", error);
     return Response.json({ success: false, message: "Unable to load events." }, { status: 500 });
   }
 }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: event }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/events failed:", error);
+    logMongoError("POST /api/events", error);
     return Response.json({ success: false, message: "Could not create event." }, { status: 500 });
   }
 }
@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
 
     return Response.json({ success: true, data: updated });
   } catch (error) {
-    console.error("PUT /api/events failed:", error);
+    logMongoError("PUT /api/events", error);
     return Response.json({ success: false, message: "Could not update event." }, { status: 500 });
   }
 }
@@ -118,7 +118,7 @@ export async function DELETE(request: NextRequest) {
 
     return Response.json({ success: true, message: "Event deleted successfully." });
   } catch (error) {
-    console.error("DELETE /api/events failed:", error);
+    logMongoError("DELETE /api/events", error);
     return Response.json({ success: false, message: "Could not delete event." }, { status: 500 });
   }
 }

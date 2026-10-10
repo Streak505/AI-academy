@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Layout/Header";
@@ -42,6 +43,7 @@ export default function RootLayout({
           {children}
           <Footer />
           <ScrollToTop />
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>

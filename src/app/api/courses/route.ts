@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Course } from "@/models/Course";
 import { Category } from "@/models/Category";
 import { Instructor } from "@/models/Instructor";
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ success: true, data: courses });
   } catch (error) {
-    console.error("GET /api/courses failed:", error);
+    logMongoError("GET /api/courses", error);
     return Response.json({ success: false, message: "Unable to load courses." }, { status: 500 });
   }
 }
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: course }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/courses failed:", error);
+    logMongoError("POST /api/courses", error);
     return Response.json({ success: false, message: "Could not create course." }, { status: 500 });
   }
 }
@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
 
     return Response.json({ success: true, data: nextCourse });
   } catch (error) {
-    console.error("PUT /api/courses failed:", error);
+    logMongoError("PUT /api/courses", error);
     return Response.json({ success: false, message: "Could not update course." }, { status: 500 });
   }
 }
@@ -187,7 +187,7 @@ export async function DELETE(request: NextRequest) {
 
     return Response.json({ success: true, message: "Course deleted successfully." });
   } catch (error) {
-    console.error("DELETE /api/courses failed:", error);
+    logMongoError("DELETE /api/courses", error);
     return Response.json({ success: false, message: "Could not delete course." }, { status: 500 });
   }
 }

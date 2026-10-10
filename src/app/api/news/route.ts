@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { News } from "@/models/News";
 import { isValidString, isValidObjectId } from "@/lib/validations";
 import { requireAdminResponse } from "@/lib/admin-auth";
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const news = await newsQuery.lean();
     return Response.json({ success: true, data: news });
   } catch (error) {
-    console.error("GET /api/news failed:", error);
+    logMongoError("GET /api/news", error);
     return Response.json({ success: false, message: "Unable to load news." }, { status: 500 });
   }
 }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: item }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/news failed:", error);
+    logMongoError("POST /api/news", error);
     return Response.json({ success: false, message: "Could not create news item." }, { status: 500 });
   }
 }
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
 
     return Response.json({ success: true, data: updated });
   } catch (error) {
-    console.error("PUT /api/news failed:", error);
+    logMongoError("PUT /api/news", error);
     return Response.json({ success: false, message: "Could not update news item." }, { status: 500 });
   }
 }
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
 
     return Response.json({ success: true, message: "News item deleted successfully." });
   } catch (error) {
-    console.error("DELETE /api/news failed:", error);
+    logMongoError("DELETE /api/news", error);
     return Response.json({ success: false, message: "Could not delete news item." }, { status: 500 });
   }
 }

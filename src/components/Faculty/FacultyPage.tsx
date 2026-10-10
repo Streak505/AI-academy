@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Instructor as InstructorModel } from "@/models/Instructor";
 import { getImagePrefix } from "@/utils/util";
+import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
 type FacultyMember = {
   _id: string;
@@ -29,7 +30,7 @@ const FacultyPage = async () => {
     }));
   } catch (error) {
     hasError = true;
-    console.error("Unable to load faculty:", error);
+    logMongoError("Faculty page", error);
   }
 
   return (
@@ -69,13 +70,9 @@ const FacultyPage = async () => {
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {hasError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800 md:col-span-2 xl:col-span-3">
-                Unable to load faculty right now. Please try again later.
-              </div>
+              <div className="md:col-span-2 xl:col-span-3"><ErrorState message="Unable to load faculty right now." /></div>
             ) : instructors.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600 md:col-span-2 xl:col-span-3">
-                Faculty profiles will appear here soon.
-              </div>
+              <div className="md:col-span-2 xl:col-span-3"><EmptyState title="No faculty profiles" message="Faculty profiles will appear here when they are published." /></div>
             ) : instructors.map((mentor) => (
               <article key={String(mentor._id)} className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-8 text-center shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-2xl">
                 <div className="relative mx-auto mb-6 h-56 w-56 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-md transition duration-300 group-hover:scale-105">

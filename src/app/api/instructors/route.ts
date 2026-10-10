@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Instructor } from "@/models/Instructor";
 import { isValidString, validateEmail } from "@/lib/validations";
 import { requireAdminResponse } from "@/lib/admin-auth";
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const instructors = await instructorsQuery.lean();
     return Response.json({ success: true, data: instructors });
   } catch (error) {
-    console.error("GET /api/instructors failed:", error);
+    logMongoError("GET /api/instructors", error);
     return Response.json({ success: false, message: "Unable to load instructors." }, { status: 500 });
   }
 }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: instructor }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/instructors failed:", error);
+    logMongoError("POST /api/instructors", error);
     return Response.json({ success: false, message: "Could not create instructor." }, { status: 500 });
   }
 }
@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
 
     return Response.json({ success: true, data: updatedInstructor });
   } catch (error) {
-    console.error("PUT /api/instructors failed:", error);
+    logMongoError("PUT /api/instructors", error);
     return Response.json({ success: false, message: "Could not update instructor." }, { status: 500 });
   }
 }
@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest) {
 
     return Response.json({ success: true, message: "Instructor deleted successfully." });
   } catch (error) {
-    console.error("DELETE /api/instructors failed:", error);
+    logMongoError("DELETE /api/instructors", error);
     return Response.json({ success: false, message: "Could not delete instructor." }, { status: 500 });
   }
 }

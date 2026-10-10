@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import dns from "dns";
 import dotenv from "dotenv";
 import { Category } from "../src/models/Category";
 import { Instructor } from "../src/models/Instructor";
@@ -12,17 +11,31 @@ import { Event } from "../src/models/Event";
 import { Announcement } from "../src/models/Announcement";
 import { Campus } from "../src/models/Campus";
 import { User } from "../src/models/User";
-import { connectToDatabase } from "../src/lib/db";
+import { connectToDatabase, describeMongoError, getMongoUri, getSafeDbInfo } from "../src/lib/db";
 import { hashPassword } from "../src/lib/admin-auth";
+import { configureDnsFromEnvironment } from "./configure-dns";
 
-dotenv.config({ path: ".env" });
-dotenv.config({ path: ".env.local", override: true });
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+type SeedOptions = { production?: boolean };
 
-async function seedDevelopmentData() {
-  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
-  if (!adminPassword) {
-    throw new Error("Missing ADMIN_PASSWORD. Set it in the environment before seeding.");
+export async function seedAcademyData({ production = false }: SeedOptions = {}) {
+  const args = process.argv.slice(2);
+  const { host, dbName } = getSafeDbInfo();
+
+  console.log(`Seed target: ${host}/${dbName}`);
+  if (!args.includes("--confirm")) {
+    throw new Error("Seeding requires --confirm. No database changes were made.");
+  }
+  const uri = getMongoUri();
+  const target = new URL(uri);
+  const isLocal = ["localhost", "127.0.0.1"].includes(target.hostname.toLowerCase());
+  if (!production && !process.env.ADMIN_PASSWORD?.trim()) {
+    throw new Error("Missing ADMIN_PASSWORD. No database changes were made.");
+  }
+  if (production && isLocal) {
+    throw new Error("Production seeding requires a remote MongoDB URI. No database changes were made.");
+  }
+  if (!production && !isLocal && !args.includes("--force-remote")) {
+    throw new Error("Refusing to seed a remote database. Pass --force-remote to proceed.");
   }
 
   await connectToDatabase();
@@ -32,34 +45,48 @@ async function seedDevelopmentData() {
     throw new Error("Database connection is not available");
   }
 
-  const collections = [
-    "users",
-    "categories",
-    "instructors",
-    "courses",
-    "lessons",
-    "reviews",
-    "news",
-    "events",
-    "announcements",
-    "campuses",
-  ];
+  if (!production) {
+    const collections = [
+      "users",
+      "categories",
+      "instructors",
+      "courses",
+      "lessons",
+      "quizzes",
+      "reviews",
+      "news",
+      "events",
+      "announcements",
+      "campuses",
+    ];
 
-  for (const collectionName of collections) {
-    const collectionExists = await db.listCollections({ name: collectionName }).hasNext();
-    if (collectionExists) {
-      await db.collection(collectionName).deleteMany({});
+    for (const collectionName of collections) {
+      const collectionExists = await db.listCollections({ name: collectionName }).hasNext();
+      if (collectionExists) {
+        await db.collection(collectionName).deleteMany({});
+      }
     }
   }
 
-  const adminUser = await User.create({
-    name: "Admin User",
-    email: "admin@aiacademy.pk",
-    passwordHash: hashPassword(adminPassword),
-    role: "ADMIN",
-    phone: "+923001112233",
-    isActive: true,
-  });
+  const existingAdmin = await User.findOne({ email: "admin@aiacademy.pk" });
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  let adminUser = existingAdmin;
+  if (!adminUser) {
+    if (!adminPassword) throw new Error("Missing ADMIN_PASSWORD for creating the initial admin user.");
+    adminUser = await User.findOneAndUpdate(
+      { email: "admin@aiacademy.pk" },
+      { $setOnInsert: {
+        name: "Admin User",
+        email: "admin@aiacademy.pk",
+        passwordHash: await hashPassword(adminPassword),
+        role: "ADMIN",
+        phone: "+923001112233",
+        isActive: true,
+      } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+  if (!adminUser) throw new Error("Could not create the initial admin user.");
 
   const instructorData = [
     {
@@ -103,16 +130,26 @@ async function seedDevelopmentData() {
     },
   ];
 
-  const instructors = await Instructor.insertMany(instructorData);
+  const instructors = await Promise.all(instructorData.map((instructor) =>
+    Instructor.findOneAndUpdate(
+      { email: instructor.email },
+      { $setOnInsert: instructor },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+  ));
 
-  const categories = await Category.insertMany([
+  const categories = await Promise.all([
     { name: "Artificial Intelligence", slug: "artificial-intelligence", description: "Foundations and practical AI systems building.", image: "/images/courses/ai.png" },
     { name: "Machine Learning", slug: "machine-learning", description: "Supervised and unsupervised model development.", image: "/images/courses/ml.png" },
     { name: "Python", slug: "python", description: "Python programming for problem solving and automation.", image: "/images/courses/web.png" },
     { name: "Data Science", slug: "data-science", description: "Analytical reasoning and decision support using data.", image: "/images/courses/data-science.png" },
     { name: "Web Development", slug: "web-development", description: "Modern front-end and back-end application creation.", image: "/images/courses/web.png" },
     { name: "Generative AI", slug: "generative-ai", description: "Prompt design, fine-tuning and AI product workflows.", image: "/images/courses/ai.png" },
-  ]);
+  ].map((category) => Category.findOneAndUpdate(
+    { slug: category.slug },
+    { $setOnInsert: category },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
   const aiCategory = categories.find((category) => category.slug === "artificial-intelligence");
   const mlCategory = categories.find((category) => category.slug === "machine-learning");
@@ -121,7 +158,7 @@ async function seedDevelopmentData() {
   const webCategory = categories.find((category) => category.slug === "web-development");
   const genAiCategory = categories.find((category) => category.slug === "generative-ai");
 
-  const courses = await Course.insertMany([
+  const courseData = [
     {
       title: "Artificial Intelligence Essentials",
       slug: "artificial-intelligence-essentials",
@@ -236,11 +273,16 @@ async function seedDevelopmentData() {
       isFeatured: true,
       isPublished: true,
     },
-  ]);
+  ];
+  const courses = await Promise.all(courseData.map((course) => Course.findOneAndUpdate(
+    { slug: course.slug },
+    { $setOnInsert: course },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
   const lessonSets = await Promise.all(
     courses.map((course) =>
-      Lesson.insertMany([
+      Promise.all([
         {
           course: course._id,
           title: `Module 1: Foundations of ${course.title}`,
@@ -261,17 +303,21 @@ async function seedDevelopmentData() {
           resources: ["Hands-on workbook"],
           isPublished: true,
         },
-      ])
+      ].map((lesson) => Lesson.findOneAndUpdate(
+        { course: course._id, title: lesson.title },
+        { $setOnInsert: lesson },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )))
     )
   );
 
   for (let i = 0; i < courses.length; i += 1) {
     const courseId = courses[i]._id;
-    const lessonIds = lessonSets[i].map((lesson) => lesson._id);
+    const lessonIds = lessonSets[i].filter(Boolean).map((lesson) => lesson!._id);
     await Course.findByIdAndUpdate(courseId, { lessons: lessonIds });
   }
 
-  const demoQuiz = await Quiz.create({
+  const demoQuiz = await Quiz.findOneAndUpdate({ course: courses[0]._id, title: "AI Foundations Checkpoint" }, { $setOnInsert: {
     course: courses[0]._id,
     title: "AI Foundations Checkpoint",
     description: "Test your understanding of core AI concepts and practical decision-making.",
@@ -313,11 +359,12 @@ async function seedDevelopmentData() {
     passingScore: 70,
     isPublished: true,
     createdBy: adminUser._id,
-  });
+  } }, { upsert: true, new: true, setDefaultsOnInsert: true });
 
+  if (!demoQuiz) throw new Error("Could not create the demo quiz.");
   await Course.findByIdAndUpdate(courses[0]._id, { quizzes: [demoQuiz._id] });
 
-  await Review.insertMany([
+  await Promise.all([
     {
       student: adminUser._id,
       name: "Muhammad Ahmed",
@@ -348,9 +395,13 @@ async function seedDevelopmentData() {
       isFeatured: false,
       isPublished: true,
     },
-  ]);
+  ].map((review) => Review.findOneAndUpdate(
+    { name: review.name, course: review.course },
+    { $setOnInsert: review },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
-  await News.insertMany([
+  await Promise.all([
     {
       title: "AI Academy launches new Generative AI studio",
       slug: "ai-academy-launches-new-generative-ai-studio",
@@ -377,9 +428,13 @@ async function seedDevelopmentData() {
       isPublished: true,
       publishedAt: new Date(),
     },
-  ]);
+  ].map((item) => News.findOneAndUpdate(
+    { slug: item.slug },
+    { $setOnInsert: item },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
-  await Event.insertMany([
+  await Promise.all([
     {
       title: "AI Career Fair 2026",
       description: "Meet leading tech organizations and learn about internships, placements and projects.",
@@ -404,9 +459,13 @@ async function seedDevelopmentData() {
       registrationUrl: "https://example.com/webinar",
       isPublished: true,
     },
-  ]);
+  ].map((item) => Event.findOneAndUpdate(
+    { title: item.title, date: item.date },
+    { $setOnInsert: item },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
-  await Announcement.insertMany([
+  await Promise.all([
     {
       title: "New intake announced",
       message: "The next AI Academy intake starts on 15 September 2026.",
@@ -423,9 +482,13 @@ async function seedDevelopmentData() {
       isActive: true,
       expiresAt: new Date("2026-09-15T00:00:00.000Z"),
     },
-  ]);
+  ].map((item) => Announcement.findOneAndUpdate(
+    { title: item.title },
+    { $setOnInsert: item },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
-  await Campus.insertMany([
+  await Promise.all([
     {
       name: "AI Academy Lahore Campus",
       city: "Lahore",
@@ -437,13 +500,29 @@ async function seedDevelopmentData() {
       facilities: ["Smart classrooms", "AI lab", "Mentoring lounge"],
       isActive: true,
     },
-  ]);
+  ].map((item) => Campus.findOneAndUpdate(
+    { name: item.name, city: item.city },
+    { $setOnInsert: item },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )));
 
   await mongoose.disconnect();
-  console.log("Development seed completed successfully");
+  console.log(`${production ? "Production" : "Development"} seed completed successfully`);
 }
 
-seedDevelopmentData().catch((error) => {
-  console.error("Seed failed:", error);
-  process.exit(1);
-});
+if (process.argv[1] && /(?:^|[\\/])seed\.ts$/.test(process.argv[1])) {
+  dotenv.config({ path: ".env" });
+  dotenv.config({ path: ".env.local", override: true });
+  configureDnsFromEnvironment();
+  seedAcademyData().catch((error) => {
+    if (error instanceof Error && /requires --confirm|Missing ADMIN_PASSWORD|Refusing to seed|requires a remote MongoDB URI/i.test(error.message)) {
+      console.error(error.message);
+      void mongoose.disconnect();
+      process.exit(1);
+    }
+    const { code, message } = describeMongoError(error);
+    console.error(`Seed failed [${code}]: ${message}`);
+    void mongoose.disconnect();
+    process.exit(1);
+  });
+}

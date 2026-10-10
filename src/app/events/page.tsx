@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Event } from "@/models/Event";
 import { getImagePrefix, formatAcademyDate } from "@/utils/util";
+import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Events | AI Academy" };
@@ -14,7 +15,7 @@ export default async function EventsPage() {
     items = (await Event.find({ isPublished: true, date: { $gte: new Date() } }).sort({ date: 1 }).lean()).map((item) => ({ ...item, _id: String(item._id) }));
   } catch (error) {
     hasError = true;
-    console.error("Unable to load events page:", error);
+    logMongoError("Events page", error);
   }
 
   return (
@@ -24,8 +25,8 @@ export default async function EventsPage() {
         <h1 className="mt-4 text-4xl font-bold text-slate-950 sm:text-5xl">Events for curious builders.</h1>
         <p className="mt-4 max-w-2xl text-slate-600">Workshops, talks, and career sessions from the AI Academy community.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {hasError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-800 md:col-span-2">Unable to load events right now.</p> : null}
-          {!hasError && items.length === 0 ? <p className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-600 md:col-span-2">No upcoming events have been published yet.</p> : null}
+          {hasError ? <div className="md:col-span-2"><ErrorState message="Unable to load events right now." /></div> : null}
+          {!hasError && items.length === 0 ? <div className="md:col-span-2"><EmptyState title="No upcoming events" message="Upcoming events will appear here when they are published." /></div> : null}
           {items.map((item) => (
             <article key={item._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:flex">
               <Image src={`${getImagePrefix()}${item.image || "/images/banner/Hero.png"}`} alt={item.title} width={360} height={280} className="h-48 w-full object-cover sm:h-auto sm:w-2/5" />

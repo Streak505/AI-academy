@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Image from "next/image";
 import { getImagePrefix } from "@/utils/util";
+import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Category } from "@/models/Category";
 
 async function getPrograms() {
@@ -42,7 +43,7 @@ const ProgramsPage = async () => {
     programs = (await getPrograms()).map((program) => ({ ...program, _id: String(program._id) }));
   } catch (error) {
     hasError = true;
-    console.error("Unable to load programs:", error);
+    logMongoError("Programs page", error);
   }
 
   return (
@@ -90,13 +91,9 @@ const ProgramsPage = async () => {
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {hasError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800 md:col-span-2 xl:col-span-3">
-                Unable to load programs right now. Please try again later.
-              </div>
+              <div className="md:col-span-2 xl:col-span-3"><ErrorState message="Unable to load programs right now." /></div>
             ) : programs.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600 md:col-span-2 xl:col-span-3">
-                No programs are available right now.
-              </div>
+              <div className="md:col-span-2 xl:col-span-3"><EmptyState title="No programs available" message="Programs will appear here when they are published." /></div>
             ) : programs.map((item) => (
               <article key={item._id} className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_30px_95px_rgba(15,23,42,0.18)]">
                 <div className="overflow-hidden rounded-t-[1.5rem] border-b border-slate-200 bg-slate-100">

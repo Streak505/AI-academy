@@ -16,6 +16,7 @@ const publicPaths = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/api/test-db",
+  "/api/health",
 ];
 
 function isPublicPath(pathname: string) {
@@ -59,5 +60,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   runtime: "nodejs",
-  matcher: ["/admin/:path*", "/student/:path*", "/instructor/:path*", "/profile/:path*", "/settings/:path*"],
+  matcher: ["/admin/:path*", "/student/:path*", "/instructor/:path*", "/profile/:path*", "/settings/:path*", "/api/health"],
 };

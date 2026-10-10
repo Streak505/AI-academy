@@ -1,3 +1,5 @@
+"use client";
+
 import { Icon } from "@iconify/react";
 
 export function LoadingState({ label = "Loading" }: { label?: string }) {
@@ -25,7 +27,7 @@ export function ErrorState({ message = "Unable to load this information right no
     <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center" role="alert">
       <Icon icon="solar:danger-triangle-linear" className="mx-auto text-3xl text-rose-600" aria-hidden="true" />
       <p className="mt-2 text-sm font-medium text-rose-900">{message}</p>
-      {onRetry ? <button type="button" onClick={onRetry} className="mt-4 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800">Try again</button> : null}
+      <button type="button" onClick={onRetry ?? (() => window.location.reload())} className="mt-4 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800">Try again</button>
     </div>
   );
 }

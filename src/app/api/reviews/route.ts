@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Review } from "@/models/Review";
 import { Course } from "@/models/Course";
 import { Enrollment } from "@/models/Enrollment";
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const reviews = await reviewsQuery.lean();
     return Response.json({ success: true, data: reviews });
   } catch (error) {
-    console.error("GET /api/reviews failed:", error);
+    logMongoError("GET /api/reviews", error);
     return Response.json({ success: false, message: "Unable to load reviews." }, { status: 500 });
   }
 }
@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest) {
     const review = await Review.findByIdAndUpdate(reviewId, updates, { new: true }).lean();
     return review ? Response.json({ success: true, data: review }) : Response.json({ success: false, message: "Review not found." }, { status: 404 });
   } catch (error) {
-    console.error("PUT /api/reviews failed:", error);
+    logMongoError("PUT /api/reviews", error);
     return Response.json({ success: false, message: "Could not update review." }, { status: 500 });
   }
 }
@@ -63,7 +63,7 @@ export async function DELETE(request: NextRequest) {
     const review = await Review.findByIdAndDelete(reviewId);
     return review ? Response.json({ success: true, message: "Review deleted successfully." }) : Response.json({ success: false, message: "Review not found." }, { status: 404 });
   } catch (error) {
-    console.error("DELETE /api/reviews failed:", error);
+    logMongoError("DELETE /api/reviews", error);
     return Response.json({ success: false, message: "Could not delete review." }, { status: 500 });
   }
 }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: review }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/reviews failed:", error);
+    logMongoError("POST /api/reviews", error);
     return Response.json({ success: false, message: "Could not create review." }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, describeMongoError } from "@/lib/db";
 import { requireAdminResponse } from "@/lib/admin-auth";
 
 export async function GET() {
@@ -12,7 +12,8 @@ export async function GET() {
       message: "MongoDB connected successfully",
     });
   } catch (error) {
-    console.error("MongoDB connection failed:", error);
+    const { code, message } = describeMongoError(error);
+    console.error(`[Admin database test ${code}] ${message}`);
 
     return Response.json(
       {

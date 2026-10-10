@@ -2,19 +2,22 @@
   "name": "e-learning_project",
   "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
     "db:seed": "tsx scripts/seed.ts",
-    "db:seed:accounts": "tsx scripts/seed-accounts.ts",
-    "predeploy": "npm run build",
-    "deploy": "touch out/.nojekyll && gh-pages -d out --dotfiles"
+    "db:seed:atlas": "tsx scripts/seed-production.ts --confirm",
+    "db:seed:accounts": "tsx scripts/seed-accounts.ts"
   },
   "dependencies": {
     "@iconify/icons-ion": "^1.2.10",
     "@iconify/react": "^5.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "aos": "^2.3.4",
     "axios": "^1.7.2",
     "bcryptjs": "^3.0.3",
@@ -48,8 +51,7 @@
     "@typescript-eslint/eslint-plugin": "^8.71.1",
     "@typescript-eslint/parser": "^8.71.1",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.2",
-    "gh-pages": "^6.3.0",
+    "eslint-config-next": "15.5.23",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.23.12",

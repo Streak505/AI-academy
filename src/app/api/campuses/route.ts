@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Campus } from "@/models/Campus";
 import { isValidString } from "@/lib/validations";
 import { requireAdminResponse } from "@/lib/admin-auth";
@@ -10,7 +10,7 @@ export async function GET() {
     const campuses = await Campus.find({ isActive: true }).sort({ city: 1 }).lean();
     return Response.json({ success: true, data: campuses });
   } catch (error) {
-    console.error("GET /api/campuses failed:", error);
+    logMongoError("GET /api/campuses", error);
     return Response.json({ success: false, message: "Unable to load campuses." }, { status: 500 });
   }
 }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, data: campus }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/campuses failed:", error);
+    logMongoError("POST /api/campuses", error);
     return Response.json({ success: false, message: "Could not create campus." }, { status: 500 });
   }
 }

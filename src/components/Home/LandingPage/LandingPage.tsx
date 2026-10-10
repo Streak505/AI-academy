@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import Slider from "react-slick";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatAcademyDate, getImagePrefix } from "@/utils/util";
+import { EmptyState, ErrorState, LoadingState } from "@/components/Common/DataState";
 import "./landing-page.css";
 
 type CourseItem = {
@@ -56,47 +57,64 @@ type EventItem = {
   location?: string;
 };
 
+type SectionKey = "courses" | "reviews" | "instructors" | "news" | "events";
+type SectionStatus = "loading" | "loaded" | "error";
+
 const LandingPage = () => {
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [instructors, setInstructors] = useState<InstructorItem[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [dataError, setDataError] = useState(false);
+  const [sectionStatus, setSectionStatus] = useState<Record<SectionKey, SectionStatus>>({
+    courses: "loading",
+    reviews: "loading",
+    instructors: "loading",
+    news: "loading",
+    events: "loading",
+  });
+
+  const loadSection = useCallback(async <T,>(
+    endpoint: string,
+    section: SectionKey,
+    setItems: React.Dispatch<React.SetStateAction<T[]>>
+  ) => {
+    setSectionStatus((current) => ({ ...current, [section]: "loading" }));
+    let status: number | undefined;
+
+    try {
+      const response = await fetch(endpoint, { cache: "no-store" });
+      status = response.status;
+      const payload = await response.json() as { success?: unknown; data?: unknown };
+      if (!response.ok || payload.success !== true || !Array.isArray(payload.data)) {
+        throw new Error("Request did not return a successful data array.");
+      }
+      setItems(payload.data as T[]);
+      setSectionStatus((current) => ({ ...current, [section]: "loaded" }));
+    } catch {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`Landing page request failed: ${endpoint} (status: ${status ?? "network error"})`);
+      }
+      setSectionStatus((current) => ({ ...current, [section]: "error" }));
+    }
+  }, []);
+
+  const renderSectionState = (section: SectionKey, isEmpty: boolean, title: string, message: string, retry: () => void) => {
+    if (sectionStatus[section] === "loading") return <LoadingState label={`Loading ${title.toLowerCase()}`} />;
+    if (sectionStatus[section] === "error") return <ErrorState message={`Unable to load ${title.toLowerCase()} right now.`} onRetry={retry} />;
+    if (isEmpty) return <EmptyState title={title} message={message} />;
+    return null;
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [coursesRes, reviewsRes, instructorsRes, newsRes, eventsRes] = await Promise.all([
-          fetch("/api/courses?featured=true&limit=6", { cache: "no-store" }),
-          fetch("/api/reviews?limit=6", { cache: "no-store" }),
-          fetch("/api/instructors?limit=6", { cache: "no-store" }),
-          fetch("/api/news?limit=3", { cache: "no-store" }),
-          fetch("/api/events?upcoming=true&limit=3", { cache: "no-store" }),
-        ]);
-
-        const [courseData, reviewData, instructorData, newsData, eventData] = await Promise.all([
-          coursesRes.ok ? coursesRes.json() : { success: false, data: [] },
-          reviewsRes.ok ? reviewsRes.json() : { success: false, data: [] },
-          instructorsRes.ok ? instructorsRes.json() : { success: false, data: [] },
-          newsRes.ok ? newsRes.json() : { success: false, data: [] },
-          eventsRes.ok ? eventsRes.json() : { success: false, data: [] },
-        ]);
-
-        setDataError([courseData, reviewData, instructorData, newsData, eventData].some((item) => !item?.success));
-        if (courseData?.success && Array.isArray(courseData.data)) setCourses(courseData.data);
-        if (reviewData?.success && Array.isArray(reviewData.data)) setReviews(reviewData.data);
-        if (instructorData?.success && Array.isArray(instructorData.data)) setInstructors(instructorData.data);
-        if (newsData?.success && Array.isArray(newsData.data)) setNews(newsData.data);
-        if (eventData?.success && Array.isArray(eventData.data)) setEvents(eventData.data);
-      } catch (error) {
-        setDataError(true);
-        console.error("Landing page data load failed", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+    void Promise.all([
+      loadSection("/api/courses?featured=true&limit=6", "courses", setCourses),
+      loadSection("/api/reviews?limit=6", "reviews", setReviews),
+      loadSection("/api/instructors?limit=6", "instructors", setInstructors),
+      loadSection("/api/news?limit=3", "news", setNews),
+      loadSection("/api/events?upcoming=true&limit=3", "events", setEvents),
+    ]);
+  }, [loadSection]);
 
   const coursesSettings = {
     dots: false,
@@ -193,11 +211,6 @@ const LandingPage = () => {
         <div className="container-standard">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             <div className="lg:col-span-6 flex flex-col gap-6">
-              {dataError ? (
-                <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                  Some academy content is unavailable right now. Please try again later.
-                </p>
-              ) : null}
               <div className="admission-pill">
                 <Icon icon="mdi:robot" className="text-primary text-xl" />
                 <p>Admission Open for 2026</p>
@@ -257,13 +270,13 @@ const LandingPage = () => {
               <h2 className="landing-section-title">Popular courses.</h2>
               <p className="landing-section-subtitle mt-3">Explore the programs learners are choosing most often.</p>
             </div>
-            <Link href="/" className="text-primary font-semibold hover:text-secondary">
+            <Link href="/programs" className="text-primary font-semibold hover:text-secondary">
               Explore courses &rarr;
             </Link>
           </div>
 
-          {courses.length === 0 ? <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">No featured courses are available right now.</p> : null}
-          {courses.length > 0 ? <Slider {...coursesSettings}>
+          {renderSectionState("courses", courses.length === 0, "No featured courses", "Featured courses will appear here when they are published.", () => void loadSection("/api/courses?featured=true&limit=6", "courses", setCourses))}
+          {sectionStatus.courses === "loaded" && courses.length > 0 ? <Slider {...coursesSettings}>
             {courses.map((item, index) => (
               <div key={`${item.slug ?? item.title ?? index}`}>
                 <div className="landing-card landing-card-hover group m-3 mb-10 overflow-hidden relative border border-slate-200 bg-white transition duration-500 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(101,86,255,0.18)] hover:bg-slate-50">
@@ -322,8 +335,8 @@ const LandingPage = () => {
             </p>
           </div>
 
-          {instructors.length === 0 ? <p className="rounded-xl border border-slate-700 bg-slate-800 p-6 text-center text-slate-300">Faculty information is not available right now.</p> : null}
-          {instructors.length > 0 ? <Slider {...mentorSettings}>
+          {renderSectionState("instructors", instructors.length === 0, "No faculty profiles", "Faculty profiles will appear here when they are published.", () => void loadSection("/api/instructors?limit=6", "instructors", setInstructors))}
+          {sectionStatus.instructors === "loaded" && instructors.length > 0 ? <Slider {...mentorSettings}>
             {instructors.map((item, index) => (
               <div key={`${item.name}-${index}`}>
                 <div className="mentor-card group m-3 relative overflow-hidden rounded-[2rem] bg-white/95 p-8 text-center shadow-lg border border-slate-200 transition duration-500 hover:-translate-y-2 hover:shadow-[0_28px_90px_rgba(99,102,241,0.24)] hover:bg-gradient-to-br hover:from-violet-50 hover:via-fuchsia-50 hover:to-rose-50">
@@ -358,8 +371,8 @@ const LandingPage = () => {
             <h2 className="landing-section-title">What learners are saying.</h2>
           </div>
 
-          {reviews.length === 0 ? <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">Student reviews will appear here soon.</p> : null}
-          {reviews.length > 0 ? <Slider {...reviewSettings}>
+          {renderSectionState("reviews", reviews.length === 0, "No student reviews", "Student reviews will appear here when they are published.", () => void loadSection("/api/reviews?limit=6", "reviews", setReviews))}
+          {sectionStatus.reviews === "loaded" && reviews.length > 0 ? <Slider {...reviewSettings}>
             {reviews.map((item, index) => (
               <div key={`${item.name ?? "review"}-${index}`}>
                 <div className="m-3 rounded-[1.5rem] bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -392,8 +405,8 @@ const LandingPage = () => {
             <h2 className="landing-section-title">News & events</h2>
           </div>
 
-          {news.length === 0 && events.length === 0 ? <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">No academy updates are available right now.</p> : null}
-          {news.length > 0 ? <Slider {...newsSettings}>
+          {renderSectionState("news", news.length === 0, "No academy news", "News will appear here when it is published.", () => void loadSection("/api/news?limit=3", "news", setNews))}
+          {sectionStatus.news === "loaded" && news.length > 0 ? <Slider {...newsSettings}>
             {news.map((item, index) => (
               <div key={`${item.title ?? "news"}-${index}`} className="p-3">
                 <article className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -407,7 +420,8 @@ const LandingPage = () => {
               </div>
             ))}
           </Slider> : null}
-          {events.length > 0 ? (
+          {renderSectionState("events", events.length === 0, "No upcoming events", "Upcoming events will appear here when they are published.", () => void loadSection("/api/events?upcoming=true&limit=3", "events", setEvents))}
+          {sectionStatus.events === "loaded" && events.length > 0 ? (
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {events.map((item, index) => (
                 <article key={`${item._id ?? item.title ?? "event"}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -4,9 +4,11 @@ import { connectToDatabase } from "../src/lib/db";
 import { hashPassword } from "../src/lib/admin-auth";
 import { User } from "../src/models/User";
 import { Instructor } from "../src/models/Instructor";
+import { configureDnsFromEnvironment } from "./configure-dns";
 
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
+configureDnsFromEnvironment();
 
 const adminPassword = process.env.ADMIN_PASSWORD?.trim();
 const instructorPassword = process.env.INSTRUCTOR_PASSWORD?.trim();
