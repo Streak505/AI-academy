@@ -7,6 +7,7 @@ import { Program } from "../src/models/Program";
 import { Student } from "../src/models/Student";
 import { CsrInitiative } from "../src/models/CsrInitiative";
 import { configureDnsFromEnvironment } from "./configure-dns";
+import { seedAdminAccount } from "./seed-admin";
 
 type SeedOptions = { production?: boolean };
 
@@ -63,7 +64,6 @@ function slugify(value: string) {
 
 async function seedLocalDemoAccounts() {
   const accounts = [
-    { email: "admin@shahzaibroyalacademy.local", name: "Academy Admin", role: "ADMIN", password: process.env.ADMIN_PASSWORD?.trim() },
     { email: "teacher@shahzaibroyalacademy.local", name: "Demo Teacher", role: "INSTRUCTOR", password: process.env.INSTRUCTOR_PASSWORD?.trim() },
     { email: "parent@shahzaibroyalacademy.local", name: "Demo Parent", role: "PARENT", password: process.env.PARENT_PASSWORD?.trim() || process.env.STUDENT_PASSWORD?.trim() },
     { email: "student@shahzaibroyalacademy.local", name: "Demo Student", role: "STUDENT", password: process.env.STUDENT_PASSWORD?.trim() },
@@ -90,8 +90,8 @@ async function seedLocalDemoAccounts() {
   }
 
   const [parent, studentUser, academicProgram] = await Promise.all([
+    User.findOne({ email: accounts[1].email }).select("_id").lean(),
     User.findOne({ email: accounts[2].email }).select("_id").lean(),
-    User.findOne({ email: accounts[3].email }).select("_id").lean(),
     Program.findOne({ group: "academic" }).sort({ order: 1 }).select("_id title").lean(),
   ]);
   if (!parent || !studentUser || !academicProgram) throw new Error("Unable to link the local demo parent and student.");
@@ -132,6 +132,7 @@ export async function seedAcademyData({ production = false }: SeedOptions = {}) 
 
   await connectDB();
   try {
+    await seedAdminAccount();
     let order = 0;
     for (const group of programGroups) {
       for (const title of group.titles) {
