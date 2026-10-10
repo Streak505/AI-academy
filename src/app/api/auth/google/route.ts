@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
     const accessToken = await signAccessToken({ sub: String(user._id), role: user.role, email: user.email });
     const refreshToken = await signRefreshToken({ sub: String(user._id), role: user.role, email: user.email });
-    const response = NextResponse.json({ success: true, user: toSafeUser(user), redirect: user.role === "ADMIN" ? "/admin/dashboard" : user.role === "INSTRUCTOR" ? "/instructor/dashboard" : "/student/dashboard" });
+    const response = NextResponse.json({ success: true, user: toSafeUser(user), redirect: user.role === "ADMIN" ? "/admin/dashboard" : user.role === "INSTRUCTOR" ? "/instructor/dashboard" : user.role === "PARENT" ? "/parent/dashboard" : "/student/dashboard" });
     setAuthCookies(response, accessToken, refreshToken);
     return response;
   } catch (error) {

@@ -2,31 +2,41 @@
 
 import Link from "next/link";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { EmptyState, ErrorState, LoadingState } from "@/components/Common/DataState";
+
+type AdmissionProgram = { _id: string; title: string; slug: string; group: string };
 
 const steps = [
   {
     number: "01",
     title: "Choose your program",
-    description: "Pick the track that matches your goals, whether it is AI, data science, or web development.",
+    description: "Choose an academic, career, language, or professional program that matches your goals.",
   },
   {
     number: "02",
     title: "Submit your application",
-    description: "Fill out the online form, share your background, and select your preferred start date.",
+    description: "Share student and guardian details so our admissions team can guide you.",
   },
   {
     number: "03",
     title: "Start learning",
-    description: "Join live sessions, complete project work, and get dedicated mentorship support.",
+    description: "Join evening classes and receive focused support from our teaching team.",
   },
 ];
 
 const AdmissionsPage = () => {
+  const [programs, setPrograms] = useState<AdmissionProgram[]>([]);
+  const [programStatus, setProgramStatus] = useState<"loading" | "loaded" | "error">("loading");
   const [form, setForm] = useState({
     applicantName: "",
+    fatherName: "",
     email: "",
     phone: "",
+    guardianName: "",
+    dob: "",
+    gender: "Other",
+    previousSchool: "",
     course: "",
     qualification: "",
     city: "",
@@ -36,6 +46,26 @@ const AdmissionsPage = () => {
     type: "idle",
     message: "",
   });
+
+  const loadPrograms = useCallback(async () => {
+    setProgramStatus("loading");
+    try {
+      const response = await fetch("/api/programs?limit=100", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result.success || !Array.isArray(result.data?.items)) {
+        throw new Error(result.message || "Unable to load programs.");
+      }
+      setPrograms(result.data.items);
+      setProgramStatus("loaded");
+    } catch (error) {
+      console.error("Unable to load admission programs:", error);
+      setProgramStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadPrograms();
+  }, [loadPrograms]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((current) => ({
@@ -64,8 +94,13 @@ const AdmissionsPage = () => {
       setStatus({ type: "success", message: "Application submitted successfully. Our admissions team will contact you soon." });
       setForm({
         applicantName: "",
+        fatherName: "",
         email: "",
         phone: "",
+        guardianName: "",
+        dob: "",
+        gender: "Other",
+        previousSchool: "",
         course: "",
         qualification: "",
         city: "",
@@ -86,10 +121,10 @@ const AdmissionsPage = () => {
           <div>
             <p className="landing-pill mb-4">Admissions</p>
             <h1 className="hero-title text-4xl sm:text-5xl lg:text-6xl">
-              Start your application and join the next AI cohort.
+              Start your application and join Shahzaib Royal Academy.
             </h1>
             <p className="hero-subtitle mt-6 text-slate-700 max-w-2xl">
-              We have a simple intake process, flexible start dates, and advisor support to help you enroll in the right program.
+              Classes take place Monday through Saturday, 5:00 PM to 8:00 PM. Our team can help you choose the right program.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/contact" className="rounded-full bg-primary px-6 py-3 font-semibold text-white transition hover:bg-secondary no-underline">
@@ -134,7 +169,7 @@ const AdmissionsPage = () => {
                 </li>
                 <li className="flex items-start gap-3">
                   <Icon icon="solar:check-circle-linear" className="text-primary text-2xl mt-1" />
-                  <span>No coding background is required for beginner-friendly tracks.</span>
+                  <span>Share previous school details and any concession request.</span>
                 </li>
               </ul>
             </div>
@@ -143,25 +178,28 @@ const AdmissionsPage = () => {
               <h2 className="landing-section-title">Apply now</h2>
               <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <input name="applicantName" value={form.applicantName} onChange={handleChange} type="text" placeholder="Full name" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
-                  <input name="email" value={form.email} onChange={handleChange} type="email" placeholder="Email" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
+                  <input name="applicantName" value={form.applicantName} onChange={handleChange} type="text" placeholder="Student full name" aria-label="Student full name" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
+                  <input name="fatherName" value={form.fatherName} onChange={handleChange} type="text" placeholder="Father's name" aria-label="Father's name" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <input name="phone" value={form.phone} onChange={handleChange} type="tel" placeholder="Phone" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
-                  <select name="course" value={form.course} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required>
+                  <input name="phone" value={form.phone} onChange={handleChange} type="tel" placeholder="Guardian phone" aria-label="Guardian phone" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required />
+                  <input name="email" value={form.email} onChange={handleChange} type="email" placeholder="Guardian email (optional)" aria-label="Guardian email (optional)" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <input name="dob" value={form.dob} onChange={handleChange} type="date" aria-label="Student date of birth" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                  <select name="course" value={form.course} onChange={handleChange} aria-label="Select a program" disabled={programStatus !== "loaded" || programs.length === 0} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required>
                     <option value="">Select a program</option>
-                    <option value="Artificial Intelligence Essentials">Artificial Intelligence Essentials</option>
-                    <option value="Machine Learning Bootcamp">Machine Learning Bootcamp</option>
-                    <option value="Python Programming for AI">Python Programming for AI</option>
-                    <option value="Data Science with Analytics">Data Science with Analytics</option>
-                    <option value="Full Stack Web Development">Full Stack Web Development</option>
+                    {programs.map((program) => <option key={program._id} value={program.slug}>{program.title}</option>)}
                   </select>
                 </div>
+                {programStatus === "loading" ? <LoadingState label="Loading programs" /> : null}
+                {programStatus === "error" ? <ErrorState message="Unable to load programs. Please retry before submitting." onRetry={() => void loadPrograms()} /> : null}
+                {programStatus === "loaded" && programs.length === 0 ? <EmptyState title="No programs available" message="Admissions are not available until a program is published." /> : null}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <input name="qualification" value={form.qualification} onChange={handleChange} type="text" placeholder="Qualification" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
-                  <input name="city" value={form.city} onChange={handleChange} type="text" placeholder="City" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                  <input name="previousSchool" value={form.previousSchool} onChange={handleChange} type="text" placeholder="Previous school" aria-label="Previous school" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                  <input name="city" value={form.city} onChange={handleChange} type="text" placeholder="City" aria-label="City" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
                 </div>
-                <textarea name="message" value={form.message} onChange={handleChange} placeholder="Tell us about your goals" rows={5} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                <textarea name="message" value={form.message} onChange={handleChange} placeholder="Tell us about your goals" aria-label="Tell us about your goals" rows={5} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
 
                 {status.message ? (
                   <div className={`rounded-2xl px-4 py-3 text-sm ${status.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
@@ -169,7 +207,7 @@ const AdmissionsPage = () => {
                   </div>
                 ) : null}
 
-                <button type="submit" className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-white transition hover:bg-secondary">
+                <button type="submit" disabled={programStatus !== "loaded" || programs.length === 0} className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-white transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50">
                   Submit application
                 </button>
               </form>

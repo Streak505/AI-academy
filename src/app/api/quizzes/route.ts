@@ -3,6 +3,8 @@ import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/user-auth";
 import { Course } from "@/models/Course";
 import { Quiz } from "@/models/Quiz";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { User } from "@/models/User";
 import { Enrollment } from "@/models/Enrollment";
 import { isValidObjectId, isValidString } from "@/lib/validations";

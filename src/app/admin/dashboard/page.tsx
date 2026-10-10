@@ -18,7 +18,7 @@ async function getDashboardData() {
     Course.countDocuments({ isPublished: true }),
     User.countDocuments({ role: "INSTRUCTOR" }),
     Enrollment.countDocuments({}),
-    Admission.countDocuments({ status: "Pending" }),
+    Admission.countDocuments({ status: { $in: ["Submitted", "UnderReview"] } }),
     ContactMessage.countDocuments({ status: "Unread" }),
     Review.countDocuments({ isPublished: true }),
   ]);

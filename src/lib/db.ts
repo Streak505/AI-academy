@@ -24,7 +24,7 @@ const cached = globalWithMongoose.mongooseCache ?? {
 
 globalWithMongoose.mongooseCache = cached;
 
-const defaultDbName = "aiacademy";
+const defaultDbName = "shahzaibroyalacademy";
 
 function getDbName() {
   return process.env.MONGODB_DB?.trim() || defaultDbName;
@@ -38,7 +38,7 @@ export function getMongoUri() {
       throw new Error("MONGODB_URI is required in production.");
     }
 
-    return "mongodb://127.0.0.1:27017/aiacademy";
+    return "mongodb://127.0.0.1:27017/shahzaibroyalacademy";
   }
 
   if (!/^mongodb(?:\+srv)?:\/\//i.test(uri)) {
@@ -112,7 +112,7 @@ export function logMongoError(context: string, error: unknown) {
 }
 
 export function getSafeDbInfo() {
-  const uri = process.env.MONGODB_URI?.trim() || "mongodb://127.0.0.1:27017/aiacademy";
+  const uri = process.env.MONGODB_URI?.trim() || "mongodb://127.0.0.1:27017/shahzaibroyalacademy";
   let host = "unknown";
 
   try {

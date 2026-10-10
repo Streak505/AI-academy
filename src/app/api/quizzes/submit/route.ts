@@ -5,6 +5,8 @@ import { Enrollment } from "@/models/Enrollment";
 import { Lesson } from "@/models/Lesson";
 import { Quiz } from "@/models/Quiz";
 import { QuizAttempt } from "@/models/QuizAttempt";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { isValidObjectId } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {

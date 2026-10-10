@@ -2,33 +2,34 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { getImagePrefix } from "@/utils/util";
+import { academy } from "@/config/academy";
 
 const highlights = [
   {
-    title: "Practical learning",
-    text: "Students work on real projects, labs, and guided assignments from day one.",
+    title: "Strong academic foundations",
+    text: "Focused evening coaching helps students build confidence and improve academic performance.",
   },
   {
-    title: "Mentor-led growth",
-    text: "Our faculty combines teaching experience with hands-on industry knowledge.",
+    title: "Guidance for families",
+    text: "We support students and parents with practical education and career decisions.",
   },
   {
-    title: "Career readiness",
-    text: "We prepare learners for internships, placements, and future-ready digital careers.",
+    title: "Skills for tomorrow",
+    text: "Career, leadership, entrepreneurship, and international learning programs help students plan ahead.",
   },
 ];
 
 const values = [
-  "Future-focused curriculum",
-  "Supportive learning environment",
-  "Innovation through collaboration",
-  "Accessible quality education",
+  "Quality education and academic improvement",
+  "Successful careers and parent partnership",
+  "Entrepreneurship and innovation",
+  "Opportunities for deserving students",
 ];
 
 const stats = [
-  { value: "10+", label: "Years of experience" },
-  { value: "5K+", label: "Learners supported" },
-  { value: "95%", label: "Career readiness" },
+  { value: "5:00–8:00 PM", label: "Evening class hours" },
+  { value: "Mon–Sat", label: "Weekly class days" },
+  { value: "6", label: "Mission commitments" },
 ];
 
 const AboutPage = () => {
@@ -37,19 +38,21 @@ const AboutPage = () => {
       <section className="bg-slateGray pt-28 pb-20 sm:pt-32 sm:pb-24">
         <div className="container-standard grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="max-w-2xl">
-            <p className="landing-pill mb-4">About AI Academy</p>
+            <p className="landing-pill mb-4">About {academy.name}</p>
             <h1 className="hero-title text-4xl sm:text-5xl lg:text-6xl">
-              We are shaping the next generation of <span className="text-primary">AI leaders</span>.
+              Strong foundations for every learner.
             </h1>
             <p className="hero-subtitle mt-6 text-slate-700">
-              AI Academy is a modern learning institute focused on technology, innovation, and practical skill building.
-              Our programs help students gain confidence through expert guidance, real-world projects, and career-focused support.
+              {academy.name} is an evening coaching academy supporting school students, families, and lifelong learners through focused teaching and practical guidance.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/" className="rounded-full bg-primary px-6 py-3 font-semibold text-white transition hover:bg-secondary no-underline">
+              <Link href="/programs" className="rounded-full bg-primary px-6 py-3 font-semibold text-white transition hover:bg-secondary no-underline">
                 Explore programs
               </Link>
-              <Link href="/#contact" className="rounded-full border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:border-primary hover:text-primary no-underline">
+              <Link href="/faculty" className="rounded-full border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:border-primary hover:text-primary no-underline">
+                Meet our faculty
+              </Link>
+              <Link href="/contact" className="rounded-full border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:border-primary hover:text-primary no-underline">
                 Contact us
               </Link>
             </div>
@@ -58,7 +61,7 @@ const AboutPage = () => {
           <div className="rounded-[2rem] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.10)]">
             <Image
               src={`${getImagePrefix()}images/banner/Hero.png`}
-              alt="Students learning with AI Academy"
+              alt={`Students learning at ${academy.name}`}
               width={720}
               height={560}
               className="h-[420px] w-full rounded-[1.5rem] object-cover"
@@ -70,13 +73,15 @@ const AboutPage = () => {
       <section className="py-20 sm:py-24">
         <div className="container-standard grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 sm:p-10">
-            <p className="landing-pill mb-4">Our mission</p>
+            <p className="landing-pill mb-4">Our vision</p>
             <h2 className="landing-section-title text-3xl sm:text-4xl">
-              Learning that is practical, inspiring, and future-ready.
+              {academy.vision}
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              We believe education should go beyond theory. Our mission is to give learners the tools, confidence, and mentorship they need to thrive in the digital world.
+              Classes run {academy.timing.days}, {academy.timing.from} to {academy.timing.to}.
             </p>
+            <h3 className="mt-6 text-lg font-semibold">Our mission</h3>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-700">{academy.mission.map((item) => <li key={item}>{item}</li>)}</ul>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -119,7 +124,7 @@ const AboutPage = () => {
           <div className="rounded-[2rem] bg-slate-50 p-8 sm:p-10">
             <Image
               src={`${getImagePrefix()}images/campus/campus.jpg`}
-              alt="AI Academy campus"
+              alt={`${academy.name} learning environment`}
               width={700}
               height={460}
               className="h-[320px] w-full rounded-[1.5rem] object-cover"
@@ -150,7 +155,7 @@ const AboutPage = () => {
           <div className="rounded-[2rem] bg-gradient-to-r from-primary to-secondary px-8 py-12 text-center text-white sm:px-12">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">Join us</p>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              Ready to build your future with AI Academy?
+              Ready to build your future with Shahzaib Royal Academy?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base text-white/85">
               Discover programs designed to help you learn, grow, and step confidently into a rewarding career.

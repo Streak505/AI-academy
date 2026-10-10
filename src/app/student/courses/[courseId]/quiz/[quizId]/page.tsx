@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/user-auth";
 import { Course } from "@/models/Course";
 import { Enrollment } from "@/models/Enrollment";
 import { Quiz } from "@/models/Quiz";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { QuizAttempt } from "@/models/QuizAttempt";
 import { QuizClient } from "./QuizClient";
 

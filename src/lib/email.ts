@@ -26,7 +26,7 @@ export async function sendVerificationEmail({ name, email, verificationUrl }: { 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#0f172a;">
       <div style="background:#0f172a;border-radius:12px;padding:24px 28px;color:#fff;">
-        <h2 style="margin:0 0 8px;font-size:24px;">AI Academy</h2>
+        <h2 style="margin:0 0 8px;font-size:24px;">${academy.name}</h2>
         <p style="margin:0;color:#cbd5e1;">Welcome to your learning journey.</p>
       </div>
       <div style="padding:24px 0;">
@@ -47,7 +47,7 @@ export async function sendPasswordResetEmail({ name, email, resetUrl }: { name: 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#0f172a;">
       <div style="background:#0f172a;border-radius:12px;padding:24px 28px;color:#fff;">
-        <h2 style="margin:0 0 8px;font-size:24px;">AI Academy</h2>
+        <h2 style="margin:0 0 8px;font-size:24px;">${academy.name}</h2>
         <p style="margin:0;color:#cbd5e1;">Secure account recovery</p>
       </div>
       <div style="padding:24px 0;">
@@ -66,8 +66,9 @@ export async function sendPasswordResetEmail({ name, email, resetUrl }: { name: 
 export async function sendWelcomeEmail({ name, email }: { name: string; email: string }) {
   return sendEmail({
     to: email,
-    subject: "Welcome to AI Academy",
+    subject: `Welcome to ${academy.name}`,
     html: `<div style="font-family:Arial,sans-serif;...">Welcome ${name || "friend"}</div>`,
-    text: `Welcome ${name || "friend"}! Your account is active and ready to explore AI Academy.`,
+    text: `Welcome ${name || "friend"}! Your account is active and ready to explore ${academy.name}.`,
   });
 }
+import { academy } from "@/config/academy";

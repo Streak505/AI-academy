@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 const QuizAttemptSchema = new Schema(
   {
     student: { type: Schema.Types.ObjectId, ref: "User", required: true },

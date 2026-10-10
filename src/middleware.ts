@@ -55,10 +55,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
+  if (pathname.startsWith("/parent") && payload.role !== "PARENT" && payload.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
   runtime: "nodejs",
-  matcher: ["/admin/:path*", "/student/:path*", "/instructor/:path*", "/profile/:path*", "/settings/:path*", "/api/health"],
+  matcher: ["/admin/:path*", "/student/:path*", "/parent/:path*", "/instructor/:path*", "/profile/:path*", "/settings/:path*", "/api/health"],
 };

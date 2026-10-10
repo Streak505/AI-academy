@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://aiacademy.pk").replace(/\/$/, "");
-export const siteName = "AI Academy";
+import { academy } from "@/config/academy";
+
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000").replace(/\/$/, "");
+export const siteName = academy.name;
 
 export function absoluteUrl(path = "") {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

@@ -8,6 +8,9 @@ import Image from "next/image";
 import EnrollButton from "@/components/Courses/EnrollButton";
 import type { Metadata } from "next";
 import { absoluteUrl, jsonLd, publicMetadata } from "@/lib/seo";
+import { academy } from "@/config/academy";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 
 async function getCourse(slug: string) {
   await connectToDatabase();
@@ -50,7 +53,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
     "@type": "Course",
     name: course.title,
     description: course.description,
-    provider: { "@type": "EducationalOrganization", name: "AI Academy", url: absoluteUrl("/") },
+    provider: { "@type": "EducationalOrganization", name: academy.name, url: absoluteUrl("/") },
     educationalLevel: course.level,
     courseMode: course.mode,
     image: course.thumbnail ? absoluteUrl(course.thumbnail) : undefined,

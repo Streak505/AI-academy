@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { User } from "@/models/User";
+import { User, USER_ROLES } from "@/models/User";
 import { connectDB } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
-const allowedRoles = ["ADMIN", "INSTRUCTOR", "STUDENT", "MODERATOR"] as const;
+const allowedRoles = USER_ROLES;
 const allowedStatuses = ["PENDING_VERIFICATION", "ACTIVE", "SUSPENDED", "DISABLED"] as const;
 
 export async function GET(request: Request) {

@@ -4,6 +4,9 @@ import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/user-auth";
 import { Course } from "@/models/Course";
 import { Enrollment } from "@/models/Enrollment";
+import { academy } from "@/config/academy";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 
 function formatDate(dateValue?: Date | string | null) {
   if (!dateValue) return "—";
@@ -66,7 +69,7 @@ export default async function StudentCertificatePage({ params }: { params: Promi
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Program</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">AI Academy</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">{academy.name}</p>
               </div>
             </div>
 
@@ -76,7 +79,7 @@ export default async function StudentCertificatePage({ params }: { params: Promi
                 <p className="mt-3 text-xl font-semibold text-slate-900">Academic Leadership</p>
               </div>
               <div className="text-right">
-                <div className="inline-block border-b-2 border-slate-400 px-6 pb-2 text-2xl font-semibold text-slate-900">AI Academy</div>
+                <div className="inline-block border-b-2 border-slate-400 px-6 pb-2 text-2xl font-semibold text-slate-900">{academy.name}</div>
               </div>
             </div>
           </div>

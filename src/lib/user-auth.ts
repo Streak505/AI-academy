@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME, ADMIN_COOKIE_NAME, REFRESH_COOKIE_NAME, Role, clearAuthCookies, generateSecureToken, getCurrentUser, hashPassword, hashToken, requireAdmin, requireAuth, requireInstructor, requireRole, requireStudent, setAuthCookies, toSafeUser, validatePassword, verifyAccessToken, verifyPassword } from "@/lib/auth";
 
 export const USER_COOKIE_NAME = AUTH_COOKIE_NAME;
-export const USER_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "MODERATOR"] as const;
+export const USER_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "PARENT", "MODERATOR"] as const;
 
 export async function getCurrentUserSession() {
   return getCurrentUser();

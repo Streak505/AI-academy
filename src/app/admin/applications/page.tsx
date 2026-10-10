@@ -27,7 +27,7 @@ export default async function AdminApplicationsPage() {
             <tr>
               <th className="px-4 py-3 text-sm font-semibold text-slate-700">Applicant</th>
               <th className="px-4 py-3 text-sm font-semibold text-slate-700">Email</th>
-              <th className="px-4 py-3 text-sm font-semibold text-slate-700">Course</th>
+              <th className="px-4 py-3 text-sm font-semibold text-slate-700">Program</th>
               <th className="px-4 py-3 text-sm font-semibold text-slate-700">Status</th>
               <th className="px-4 py-3 text-sm font-semibold text-slate-700">Submitted</th>
             </tr>
@@ -35,12 +35,12 @@ export default async function AdminApplicationsPage() {
           <tbody className="divide-y divide-slate-200 bg-white">
             {applications.map((app: any) => (
               <tr key={String(app._id)}>
-                <td className="px-4 py-4 font-medium text-slate-900">{app.applicantName}</td>
+                <td className="px-4 py-4 font-medium text-slate-900">{app.applicant?.studentName || app.applicantName}</td>
                 <td className="px-4 py-4 text-slate-600">{app.email}</td>
-                <td className="px-4 py-4 text-slate-600">{app.course}</td>
+                <td className="px-4 py-4 text-slate-600">{app.applicant?.classApplyingFor || app.course}</td>
                 <td className="px-4 py-4">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    app.status === "Approved" ? "bg-emerald-100 text-emerald-700" :
+                    ["Approved", "Enrolled"].includes(app.status) ? "bg-emerald-100 text-emerald-700" :
                     app.status === "Rejected" ? "bg-rose-100 text-rose-700" :
                     "bg-amber-100 text-amber-700"
                   }`}>

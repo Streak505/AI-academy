@@ -5,7 +5,8 @@ import { getImagePrefix, formatAcademyDate } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "News | AI Academy" };
+// DEPRECATED: not part of Shahzaib Royal Academy scope
+export const metadata = { title: "News | Shahzaib Royal Academy" };
 
 export default async function NewsPage() {
   let items: Array<{ _id: string; title: string; excerpt?: string; image?: string; publishedAt?: Date }> = [];
@@ -22,7 +23,7 @@ export default async function NewsPage() {
     <main className="min-h-screen bg-slate-50 px-4 pb-20 pt-32">
       <div className="mx-auto max-w-6xl">
         <p className="landing-pill">Academy news</p>
-        <h1 className="mt-4 text-4xl font-bold text-slate-950 sm:text-5xl">What is happening at AI Academy.</h1>
+        <h1 className="mt-4 text-4xl font-bold text-slate-950 sm:text-5xl">What is happening at Shahzaib Royal Academy.</h1>
         <p className="mt-4 max-w-2xl text-slate-600">Follow new programs, learning opportunities, and academy updates.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {hasError ? <div className="md:col-span-2 lg:col-span-3"><ErrorState message="Unable to load academy news right now." /></div> : null}

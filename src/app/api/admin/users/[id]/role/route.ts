@@ -4,8 +4,9 @@ import { User } from "@/models/User";
 import { AuditLog } from "@/models/AuditLog";
 import { connectDB } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { USER_ROLES } from "@/models/User";
 
-const allowedRoles = ["ADMIN", "INSTRUCTOR", "STUDENT", "MODERATOR"] as const;
+const allowedRoles = USER_ROLES;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

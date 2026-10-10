@@ -7,22 +7,23 @@ import { ThemeProvider } from "next-themes";
 import ScrollToTop from "@/components/ScrollToTop";
 import type { Metadata } from "next";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo";
+import { academy } from "@/config/academy";
 const font = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"], });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "AI Academy | AI, Programming & Technology Courses", template: "%s | AI Academy" },
-  description: "Practical AI, programming, data science, web development, and technology education for ambitious learners.",
+  title: { default: academy.name, template: `%s | ${academy.name}` },
+  description: academy.tagline,
   authors: [{ name: siteName }],
   creator: siteName,
   publisher: siteName,
   applicationName: siteName,
-  keywords: ["AI courses", "technology academy", "programming courses", "Pakistan"],
+  keywords: ["school academy", "academic coaching", "career counseling", "Pakistan"],
   alternates: { canonical: absoluteUrl("/") },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  openGraph: { type: "website", locale: "en_PK", url: siteUrl, siteName, title: "AI Academy | AI, Programming & Technology Courses", description: "Practical technology education built for career-ready learners." },
-  twitter: { card: "summary_large_image", title: "AI Academy | AI, Programming & Technology Courses", description: "Practical technology education built for career-ready learners." },
-  icons: { icon: "/images/logo/AI-logo.png" },
+  openGraph: { type: "website", locale: "en_PK", url: siteUrl, siteName, title: academy.name, description: academy.tagline },
+  twitter: { card: "summary_large_image", title: academy.name, description: academy.tagline },
+  icons: { icon: "/images/logo/logo-placeholder.svg" },
 };
 
 export default function RootLayout({

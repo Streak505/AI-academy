@@ -36,14 +36,14 @@ export async function POST(request: Request) {
     user.lastLoginAt = new Date();
     await user.save();
 
-    const role = user.role as "ADMIN" | "INSTRUCTOR" | "STUDENT" | "MODERATOR";
+    const role = user.role as "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PARENT" | "MODERATOR";
     const accessToken = await signAccessToken({ sub: String(user._id), role, email: user.email });
     const refreshToken = await signRefreshToken({ sub: String(user._id), role, email: user.email });
     const response = NextResponse.json({
       success: true,
       role,
       user: toSafeUser(user),
-      redirect: role === "ADMIN" ? "/admin/dashboard" : role === "INSTRUCTOR" ? "/instructor/dashboard" : "/student/dashboard",
+      redirect: role === "ADMIN" ? "/admin/dashboard" : role === "INSTRUCTOR" ? "/instructor/dashboard" : role === "PARENT" ? "/parent/dashboard" : "/student/dashboard",
     });
 
     setAuthCookies(response, accessToken, refreshToken);

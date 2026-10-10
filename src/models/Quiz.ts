@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 const QuestionSchema = new Schema(
   {
     text: { type: String, required: true, trim: true },

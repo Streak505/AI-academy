@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">AI Academy</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">Shahzaib Royal Academy</p>
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Admin login</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">

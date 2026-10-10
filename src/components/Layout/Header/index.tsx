@@ -12,7 +12,7 @@ import { Icon } from "@iconify/react";
 type Account = {
   name: string;
   email: string;
-  role: "ADMIN" | "INSTRUCTOR" | "STUDENT";
+  role: "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PARENT" | "MODERATOR";
   avatar?: string;
 };
 
@@ -24,6 +24,12 @@ const roleLinks = {
   INSTRUCTOR: [
     ["Profile", "/profile"], ["Instructor Dashboard", "/instructor/dashboard"], ["My Courses", "/instructor/dashboard#courses"],
     ["Students", "/instructor/dashboard#students"], ["Reviews", "/instructor/dashboard#reviews"], ["Settings", "/settings"],
+  ],
+  PARENT: [
+    ["Profile", "/profile"], ["Parent Dashboard", "/parent/dashboard"], ["Settings", "/settings"],
+  ],
+  MODERATOR: [
+    ["Profile", "/profile"], ["Student Dashboard", "/student/dashboard"], ["Settings", "/settings"],
   ],
   ADMIN: [
     ["Profile", "/profile"], ["Admin Dashboard", "/admin/dashboard"], ["Courses", "/admin/courses"],
@@ -91,7 +97,7 @@ const Header: React.FC = () => {
 
   if (pathname.startsWith("/signin") || pathname.startsWith("/signup") || pathname.startsWith("/admin")) return null;
 
-  const initials = account?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "AI";
+  const initials = account?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "SRA";
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -105,7 +111,7 @@ const Header: React.FC = () => {
     <header className={`fixed top-0 z-50 w-full border-b transition-all duration-300 ${sticky ? "border-slate-200 bg-white/95 py-3 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-950/85" : "border-transparent bg-white/85 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75"}`}>
       <div className="mx-auto flex w-full max-w-[1440px] items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Logo />
-          <nav className="hidden flex-1 items-center justify-center gap-0.5 xl:flex">
+          <nav className="hidden flex-1 items-center justify-center gap-0.5 2xl:flex">
             {headerData.map((item, index) => (
               <HeaderLink key={index} item={item} />
             ))}
@@ -123,12 +129,12 @@ const Header: React.FC = () => {
                     <button onClick={logout} className="mt-1 w-full border-t border-slate-100 px-3 py-2 pt-3 text-left text-sm font-medium text-rose-600 hover:bg-rose-50">Log out</button>
                   </div>}
                 </div>
-              ) : <Link href="/signin" className="no-underline rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary">Sign In</Link>}
+              ) : <Link href="/signin" className="no-underline rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary">Login</Link>}
             </div>
             <div className="hidden lg:block"><ThemeToggler /></div>
             <button
               onClick={() => setNavbarOpen(!navbarOpen)}
-              className="rounded-lg p-2 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/30 xl:hidden"
+              className="rounded-lg p-2 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/30 2xl:hidden"
               aria-label="Toggle mobile menu"
               aria-expanded={navbarOpen}
             >
@@ -136,10 +142,10 @@ const Header: React.FC = () => {
             </button>
           </div>
       </div>
-        {navbarOpen && <div className="fixed inset-0 z-40 bg-slate-950/30 xl:hidden" />}
+        {navbarOpen && <div className="fixed inset-0 z-40 bg-slate-950/30 2xl:hidden" />}
       <div
           ref={mobileMenuRef}
-            className={`fixed right-0 top-0 z-50 h-full w-[min(88vw,380px)] transform bg-white p-6 shadow-2xl transition-transform duration-300 xl:hidden dark:bg-slate-950 ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
+            className={`fixed right-0 top-0 z-50 h-full w-[min(88vw,380px)] transform bg-white p-6 shadow-2xl transition-transform duration-300 2xl:hidden dark:bg-slate-950 ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="flex items-center justify-between">
               <Logo /><button onClick={() => setNavbarOpen(false)} className="rounded-lg p-2 text-xl hover:bg-slate-100" aria-label="Close menu"><Icon icon="solar:close-circle-linear" className="text-2xl" aria-hidden="true" /></button>
@@ -149,7 +155,7 @@ const Header: React.FC = () => {
               <MobileHeaderLink key={index} item={item} />
             ))}
             <div className="mt-6 flex w-full flex-col gap-2 border-t border-slate-200 pt-6 dark:border-slate-700">
-              {account ? <>{roleLinks[account.role].slice(0, 3).map(([label, href]) => <Link key={label} href={href} onClick={() => setNavbarOpen(false)} className="no-underline rounded-lg border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">{label}</Link>)}<button onClick={logout} className="rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">Log out</button></> : <Link href="/signin" onClick={() => setNavbarOpen(false)} className="no-underline rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-white">Sign In</Link>}
+              {account ? <>{roleLinks[account.role].slice(0, 3).map(([label, href]) => <Link key={label} href={href} onClick={() => setNavbarOpen(false)} className="no-underline rounded-lg border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">{label}</Link>)}<button onClick={logout} className="rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">Log out</button></> : <Link href="/signin" onClick={() => setNavbarOpen(false)} className="no-underline rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-white">Login</Link>}
             </div>
           </nav>
       </div>

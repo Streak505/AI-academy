@@ -126,14 +126,14 @@ export const MentorData: { profession: string; name: string; imgSrc: string }[] 
 export const ReviewData: { profession: string; comment: string; imgSrc: string; name: string; rating: number; }[] = [
   {
     name: "Fahad Ghani",
-    profession: 'AI academy Graduate',
+    profession: 'Academy Graduate',
     comment: 'Amzaing institute',
     imgSrc: '/images/testimonial/student1.png',
     rating: 5
   },
   {
     name: "hamza Ismail",
-    profession: 'AI academy employe',
+    profession: 'Academy Employee',
     comment: 'very good working enviornment and fun place',
     imgSrc: '/images/testimonial/student2.png',
     rating: 5

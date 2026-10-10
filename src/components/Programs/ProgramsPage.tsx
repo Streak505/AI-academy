@@ -4,6 +4,7 @@ import Image from "next/image";
 import { getImagePrefix } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
+// DEPRECATED: not part of Shahzaib Royal Academy scope; /programs uses academy Programs.
 import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Category } from "@/models/Category";
 
@@ -113,7 +114,7 @@ const ProgramsPage = async () => {
                     Track
                   </div>
                   <h3 className="text-2xl font-semibold text-slate-950">{item.name}</h3>
-                  <p className="mt-4 text-slate-800 leading-7">{item.description || "Explore practical courses and build skills with AI Academy."}</p>
+                  <p className="mt-4 text-slate-800 leading-7">{item.description || "Explore programs and develop your skills with Shahzaib Royal Academy."}</p>
                   <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
                     <Link href={`/admissions?program=${encodeURIComponent(item.name)}`} className="text-primary font-semibold hover:text-secondary no-underline transition">
                       Explore courses →

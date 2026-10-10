@@ -5,6 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import SocialSignIn from "../SocialSignIn";
 import Loader from "@/components/Common/Loader";
+import { academy } from "@/config/academy";
 
 const Signin = () => {
   const router = useRouter();
@@ -41,7 +42,7 @@ const Signin = () => {
   return (
     <div className="mx-auto w-full max-w-[430px] rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-xl shadow-slate-900/5 sm:px-10 sm:py-10">
       <div className="mb-8">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary">AI Academy</p>
+        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary">{academy.name}</p>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-500">Sign in to continue your learning journey.</p>
       </div>

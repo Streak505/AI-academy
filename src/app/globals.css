@@ -16,10 +16,10 @@ html.dark {
 
 :root {
   color-scheme: light;
-  --academy-primary: #0f766e;
-  --academy-secondary: #115e59;
-  --academy-primary-hover: #0b5f59;
-  --academy-accent: #f59e0b;
+  --academy-primary: #0B1F4B;
+  --academy-secondary: #C9A227;
+  --academy-primary-hover: #17366f;
+  --academy-accent: #C9A227;
   --academy-background: #f8fafc;
   --academy-surface: #ffffff;
   --academy-text: #0f172a;
@@ -37,8 +37,8 @@ body {
   overflow-x: hidden;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   color: #0f172a;
-  background: radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 24%),
-    radial-gradient(circle at 88% 10%, rgba(245, 158, 11, 0.08), transparent 18%),
+  background: radial-gradient(circle at top left, rgba(11, 31, 75, 0.12), transparent 24%),
+    radial-gradient(circle at 88% 10%, rgba(201, 162, 39, 0.08), transparent 18%),
     #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -51,8 +51,8 @@ html.dark body {
 }
 
 html:not(.dark) body {
-  background: radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 24%),
-    radial-gradient(circle at 88% 10%, rgba(245, 158, 11, 0.08), transparent 18%),
+  background: radial-gradient(circle at top left, rgba(11, 31, 75, 0.12), transparent 24%),
+    radial-gradient(circle at 88% 10%, rgba(201, 162, 39, 0.08), transparent 18%),
     #f8fafc;
   color: #0f172a;
 }

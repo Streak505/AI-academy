@@ -6,11 +6,11 @@ import { NextResponse } from "next/server";
 import { User } from "@/models/User";
 import { connectDB } from "@/lib/db";
 
-export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "MODERATOR";
+export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PARENT" | "MODERATOR";
 
-export const AUTH_COOKIE_NAME = "ai_academy_auth";
+export const AUTH_COOKIE_NAME = "sra_auth";
 export const ADMIN_COOKIE_NAME = "ai_admin_session";
-export const REFRESH_COOKIE_NAME = "ai_academy_refresh";
+export const REFRESH_COOKIE_NAME = "sra_refresh";
 
 function getEnv(name: string) {
   const value = process.env[name]?.trim();
@@ -57,7 +57,7 @@ type TokenPayload = {
 export async function signAccessToken({ sub, role, email }: { sub: string; role: Role; email?: string }) {
   return jwt.sign({ sub, role, email, type: "access", jti: generateSecureToken(16) }, getEnv("JWT_SECRET"), {
     expiresIn: "15m",
-    issuer: "aiacademy",
+    issuer: "shahzaib-royal-academy",
     algorithm: "HS256",
   });
 }
@@ -65,7 +65,7 @@ export async function signAccessToken({ sub, role, email }: { sub: string; role:
 export async function signRefreshToken({ sub, role, email }: { sub: string; role: Role; email?: string }) {
   return jwt.sign({ sub, role, email, type: "refresh", jti: generateSecureToken(16) }, getEnv("JWT_REFRESH_SECRET"), {
     expiresIn: "7d",
-    issuer: "aiacademy",
+    issuer: "shahzaib-royal-academy",
     algorithm: "HS256",
   });
 }
@@ -74,7 +74,7 @@ async function verifyToken(token: string, expectedType: "access" | "refresh", se
   try {
     const decoded = jwt.verify(token, getEnv(secretName), {
       algorithms: ["HS256"],
-      issuer: "aiacademy",
+      issuer: "shahzaib-royal-academy",
     }) as JwtPayload & TokenPayload;
 
     if (!decoded || decoded.type !== expectedType || !decoded.sub) {

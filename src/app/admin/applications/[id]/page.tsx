@@ -31,7 +31,14 @@ export default function EditApplicationPage() {
         const response = await fetch(`/api/applications?id=${appId}`);
         const data = await response.json();
         if (data.success && data.data?.length > 0) {
-          setForm(data.data[0]);
+          setForm({
+            ...data.data[0],
+            applicantName: data.data[0].applicant?.studentName || data.data[0].applicantName || "",
+            email: data.data[0].guardian?.email || data.data[0].email || "",
+            phone: data.data[0].guardian?.phone || data.data[0].phone || "",
+            course: data.data[0].applicant?.classApplyingFor || data.data[0].course || "",
+            qualification: data.data[0].qualification || data.data[0].previousSchool || "",
+          });
         }
       } catch (_err) {
         setError("Failed to load application");
@@ -122,9 +129,11 @@ export default function EditApplicationPage() {
         <textarea value={form.qualifications} onChange={(event) => setForm({ ...form, qualifications: event.target.value })} placeholder="Qualifications" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" rows={4} />
 
         <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <option>Pending</option>
+          <option>Submitted</option>
+          <option>UnderReview</option>
           <option>Approved</option>
           <option>Rejected</option>
+          <option>Enrolled</option>
         </select>
 
         {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}

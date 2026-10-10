@@ -4,6 +4,8 @@ import { connectToDatabase } from "@/lib/db";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { Category } from "@/models/Category";
 import { Course } from "@/models/Course";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { Instructor } from "@/models/Instructor";
 
 export default async function AdminCoursesPage() {

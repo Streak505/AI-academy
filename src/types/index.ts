@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT";
+export type Role = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PARENT" | "MODERATOR";
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 export type CourseMode = "Online" | "Onsite" | "Hybrid";
 export type AdmissionStatus = "Pending" | "Contacted" | "Approved" | "Rejected";

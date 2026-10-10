@@ -5,7 +5,8 @@ import { getImagePrefix, formatAcademyDate } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Events | AI Academy" };
+// DEPRECATED: not part of Shahzaib Royal Academy scope
+export const metadata = { title: "Events | Shahzaib Royal Academy" };
 
 export default async function EventsPage() {
   let items: Array<{ _id: string; title: string; description: string; image?: string; date: Date; location: string; type?: string }> = [];
@@ -23,7 +24,7 @@ export default async function EventsPage() {
       <div className="mx-auto max-w-6xl">
         <p className="landing-pill">Learning together</p>
         <h1 className="mt-4 text-4xl font-bold text-slate-950 sm:text-5xl">Events for curious builders.</h1>
-        <p className="mt-4 max-w-2xl text-slate-600">Workshops, talks, and career sessions from the AI Academy community.</p>
+        <p className="mt-4 max-w-2xl text-slate-600">Workshops, talks, and career sessions from the Shahzaib Royal Academy community.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {hasError ? <div className="md:col-span-2"><ErrorState message="Unable to load events right now." /></div> : null}
           {!hasError && items.length === 0 ? <div className="md:col-span-2"><EmptyState title="No upcoming events" message="Upcoming events will appear here when they are published." /></div> : null}

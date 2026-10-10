@@ -16,10 +16,10 @@ const studentPassword = process.env.STUDENT_PASSWORD?.trim();
 if (!adminPassword || !instructorPassword || !studentPassword) throw new Error("Missing ADMIN_PASSWORD, INSTRUCTOR_PASSWORD, or STUDENT_PASSWORD. Set them before seeding.");
 
 const accounts = [
-  { name: "Admin User", email: "admin@aiacademy.pk", password: adminPassword, role: "ADMIN" as const },
-  { name: "Ayesha Khan", email: "ayesha.khan@aiacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
-  { name: "Usman Tariq", email: "usman.tariq@aiacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
-  { name: "Hina Shahid", email: "hina.shahid@aiacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
+  { name: "Academy Admin", email: "admin@shahzaibroyalacademy.pk", password: adminPassword, role: "ADMIN" as const },
+  { name: "Ayesha Khan", email: "ayesha.khan@shahzaibroyalacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
+  { name: "Usman Tariq", email: "usman.tariq@shahzaibroyalacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
+  { name: "Hina Shahid", email: "hina.shahid@shahzaibroyalacademy.pk", password: instructorPassword, role: "INSTRUCTOR" as const },
   { name: "Ali Raza", email: "ali.raza@student.pk", password: studentPassword, role: "STUDENT" as const },
   { name: "Sara Ahmed", email: "sara.ahmed@student.pk", password: studentPassword, role: "STUDENT" as const },
   { name: "Hamza Malik", email: "hamza.malik@student.pk", password: studentPassword, role: "STUDENT" as const },

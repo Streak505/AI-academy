@@ -38,7 +38,7 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
     >
       <Link
         href={resolvedHref}
-        className={`no-underline relative flex items-center gap-1 rounded-lg px-2 py-2 text-sm font-medium transition-all duration-200 ${
+        className={`no-underline relative flex items-center gap-1 rounded-lg px-1 py-2 text-xs font-medium transition-all duration-200 ${
           isActive
             ? "text-primary bg-slate-100 shadow-sm after:absolute after:-bottom-1 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-gradient-to-r after:from-primary after:to-secondary"
             : "text-slate-700 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800"

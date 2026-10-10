@@ -1,7 +1,8 @@
 import AboutPage from "@/components/About/AboutPage";
+import { academy } from "@/config/academy";
 
 export const metadata = {
-  title: "About Us | AI Academy",
+  title: `About Us | ${academy.name}`,
 };
 
 export default function AboutRoute() {

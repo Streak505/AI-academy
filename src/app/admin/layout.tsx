@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex min-h-screen">
         <aside className="hidden w-72 shrink-0 border-r border-slate-800 bg-slate-950 p-5 text-white lg:block">
           <div className="mb-10 border-b border-slate-800 pb-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-400">AI Academy</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-400">Shahzaib Royal Academy</p>
             <h1 className="mt-2 text-2xl font-bold">Control centre</h1>
             <p className="mt-2 text-sm text-slate-400">Manage learning, people, and admissions.</p>
           </div>
@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="border-b border-slate-200 bg-white px-4 py-4 lg:hidden">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">AI Academy</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Shahzaib Royal Academy</p>
                 <p className="font-bold text-slate-950">Control centre</p>
               </div>
               <form action="/logout" method="POST">

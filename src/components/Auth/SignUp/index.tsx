@@ -88,7 +88,7 @@ const SignUp = () => {
       </form>
 
       <p className="mt-6 text-sm leading-6 text-slate-600">
-        By creating an account you agree to use AI Academy for learning and educational communication.
+        By creating an account you agree to use Shahzaib Royal Academy services for learning and educational communication.
       </p>
 
       <p className="mt-4 text-base text-slate-600">

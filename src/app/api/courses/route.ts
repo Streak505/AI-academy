@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Course } from "@/models/Course";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { Category } from "@/models/Category";
 import { Instructor } from "@/models/Instructor";
 import { isValidObjectId, isValidPrice, isValidString } from "@/lib/validations";

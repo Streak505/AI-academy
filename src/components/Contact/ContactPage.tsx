@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { academy } from "@/config/academy";
 
 const ContactPage = () => {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
@@ -66,23 +67,19 @@ const ContactPage = () => {
             <div className="space-y-6">
               <div>
                 <p className="text-sm uppercase tracking-[0.28em] text-primary/80">Office</p>
-                <h2 className="mt-4 text-3xl font-semibold text-slate-900">Islamabad Campus</h2>
+                <h2 className="mt-4 text-3xl font-semibold text-slate-900">{academy.name}</h2>
                 <p className="mt-3 text-slate-600 leading-7">
-                  123 AI Avenue, Knowledge Park, Islamabad, Pakistan
+                  {academy.address}
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
                   <p className="font-semibold text-slate-900">Email</p>
-                  <a href="mailto:info@aiacademy.edu.pk" className="mt-2 block text-slate-600 underline hover:text-primary">
-                    info@aiacademy.edu.pk
-                  </a>
+                  {academy.email.startsWith("TODO_REPLACE") ? <p className="mt-2 text-slate-600">{academy.email}</p> : <a href={`mailto:${academy.email}`} className="mt-2 block text-slate-600 underline hover:text-primary">{academy.email}</a>}
                 </div>
                 <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
                   <p className="font-semibold text-slate-900">Phone</p>
-                  <a href="tel:+9251111222333" className="mt-2 block text-slate-600 underline hover:text-primary">
-                    +92 51 111 222 333
-                  </a>
+                  {academy.phone.startsWith("TODO_REPLACE") ? <p className="mt-2 text-slate-600">{academy.phone}</p> : <a href={`tel:${academy.phone}`} className="mt-2 block text-slate-600 underline hover:text-primary">{academy.phone}</a>}
                 </div>
               </div>
             </div>
@@ -160,16 +157,16 @@ const ContactPage = () => {
               <p className="text-sm uppercase tracking-[0.3em] text-white/80">Let’s connect</p>
               <h2 className="mt-4 text-3xl font-semibold">Ready to start your journey?</h2>
               <p className="mt-5 text-slate-100 leading-7">
-                Our team is available to answer questions about course content, schedules, and financing options.
+                Our team is available to answer questions about programs, evening schedules, and admissions.
               </p>
               <div className="mt-8 space-y-4 text-sm text-slate-100">
                 <div className="rounded-2xl border border-white/20 bg-white/10 p-5 shadow-sm">
                   <p className="font-semibold">Office hours</p>
-                  <p className="mt-2">Mon - Fri, 9:00 AM - 6:00 PM</p>
+                  <p className="mt-2">{academy.timing.days}, {academy.timing.from}–{academy.timing.to}</p>
                 </div>
                 <div className="rounded-2xl border border-white/20 bg-white/10 p-5 shadow-sm">
                   <p className="font-semibold">Support</p>
-                  <p className="mt-2">support@aiacademy.edu.pk</p>
+                  <p className="mt-2">{academy.email}</p>
                 </div>
               </div>
             </div>

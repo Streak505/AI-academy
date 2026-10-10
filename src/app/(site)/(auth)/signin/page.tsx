@@ -1,9 +1,9 @@
 import Signin from "@/components/Auth/SignIn";
 import { Metadata } from "next";
+import { academy } from "@/config/academy";
 
 export const metadata: Metadata = {
-  title:
-    "Sign In | AI Academy",
+  title: `Login | ${academy.name}`,
 };
 
 const SigninPage = () => {

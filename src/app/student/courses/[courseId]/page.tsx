@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/user-auth";
 import { Enrollment } from "@/models/Enrollment";
+
+// DEPRECATED: not part of Shahzaib Royal Academy scope
 import { Lesson } from "@/models/Lesson";
 import { Course } from "@/models/Course";
 import { Quiz } from "@/models/Quiz";

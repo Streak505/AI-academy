@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
-export const USER_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "MODERATOR"] as const;
+export const USER_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "PARENT", "MODERATOR"] as const;
 export const USER_STATUSES = ["PENDING_VERIFICATION", "ACTIVE", "SUSPENDED", "DISABLED"] as const;
 export const AUTH_PROVIDERS = ["local", "google"] as const;
 

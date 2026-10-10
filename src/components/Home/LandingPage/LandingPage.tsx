@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { formatAcademyDate, getImagePrefix } from "@/utils/util";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Common/DataState";
 import "./landing-page.css";
+import { academy } from "@/config/academy";
 
 type CourseItem = {
   _id?: string;
@@ -21,6 +22,8 @@ type CourseItem = {
   instructor?: { name?: string };
   category?: { name?: string };
   isFeatured?: boolean;
+  group?: string;
+  monthlyFee?: number;
 };
 
 type ReviewItem = {
@@ -86,10 +89,16 @@ const LandingPage = () => {
       const response = await fetch(endpoint, { cache: "no-store" });
       status = response.status;
       const payload = await response.json() as { success?: unknown; data?: unknown };
-      if (!response.ok || payload.success !== true || !Array.isArray(payload.data)) {
-        throw new Error("Request did not return a successful data array.");
+      const responseData = payload.data;
+      const items = Array.isArray(responseData)
+        ? responseData
+        : responseData && typeof responseData === "object" && "items" in responseData && Array.isArray(responseData.items)
+          ? responseData.items
+          : null;
+      if (!response.ok || payload.success !== true || !items) {
+        throw new Error("Request did not return a successful data collection.");
       }
-      setItems(payload.data as T[]);
+      setItems(items as T[]);
       setSectionStatus((current) => ({ ...current, [section]: "loaded" }));
     } catch {
       if (process.env.NODE_ENV === "development") {
@@ -108,7 +117,7 @@ const LandingPage = () => {
 
   useEffect(() => {
     void Promise.all([
-      loadSection("/api/courses?featured=true&limit=6", "courses", setCourses),
+      loadSection("/api/programs?limit=6", "courses", setCourses),
       loadSection("/api/reviews?limit=6", "reviews", setReviews),
       loadSection("/api/instructors?limit=6", "instructors", setInstructors),
       loadSection("/api/news?limit=3", "news", setNews),
@@ -213,24 +222,23 @@ const LandingPage = () => {
             <div className="lg:col-span-6 flex flex-col gap-6">
               <div className="admission-pill">
                 <Icon icon="mdi:robot" className="text-primary text-xl" />
-                <p>Admission Open for 2026</p>
+                <p>                Evening coaching for 2026</p>
               </div>
 
               <div className="space-y-4">
                 <h1 className="hero-title">
-                  Shape your future with <span className="text-primary">AI</span>.
+                  Build strong foundations for a brighter future.
                 </h1>
                 <p className="hero-subtitle">
-                  AI Academy delivers practical training in Artificial Intelligence, Machine Learning,
-                  Data Science, Web Development, and Robotics.
+                  {academy.name} helps students excel at school, plan their careers, develop leadership, and explore global opportunities.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3 pt-2">
                 {[
-                  "Expert Faculty",
-                  "Modern Labs",
-                  "Career Support",
+                  "Academic Support",
+                  "Career Guidance",
+                  "Evening Classes",
                 ].map((item) => (
                   <div key={item} className="feature-pill">
                     <Image src={`${getImagePrefix()}images/banner/check-circle.svg`} alt="check" width={30} height={30} />
@@ -244,16 +252,16 @@ const LandingPage = () => {
               <div className="image-panel">
                 <Image
                   src={`${getImagePrefix()}images/banner/Hero.png`}
-                  alt="AI academy"
+                  alt={`Students at ${academy.name}`}
                   width={700}
                   height={700}
                   className="h-auto w-full object-cover"
                 />
                 <div className="overlay-card">
-                  <p className="text-xs uppercase tracking-[0.35em] text-primary/80">Next-gen learning</p>
-                  <h2 className="mt-3 text-3xl font-semibold">AI Academy</h2>
+                  <p className="text-xs uppercase tracking-[0.35em] text-primary/80">{academy.timing.days}</p>
+                  <h2 className="mt-3 text-3xl font-semibold">{academy.name}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-300">
-                    Practical AI programs with hands-on labs, mentor support, and career-ready projects.
+                    Evening classes from {academy.timing.from} to {academy.timing.to}.
                   </p>
                 </div>
               </div>
@@ -267,44 +275,44 @@ const LandingPage = () => {
           <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="landing-pill mb-4">Trending now</p>
-              <h2 className="landing-section-title">Popular courses.</h2>
+              <h2 className="landing-section-title">Popular programs.</h2>
               <p className="landing-section-subtitle mt-3">Explore the programs learners are choosing most often.</p>
             </div>
             <Link href="/programs" className="text-primary font-semibold hover:text-secondary">
-              Explore courses &rarr;
+              Explore programs &rarr;
             </Link>
           </div>
 
-          {renderSectionState("courses", courses.length === 0, "No featured courses", "Featured courses will appear here when they are published.", () => void loadSection("/api/courses?featured=true&limit=6", "courses", setCourses))}
+          {renderSectionState("courses", courses.length === 0, "No published programs", "Programs will appear here when they are published.", () => void loadSection("/api/programs?limit=6", "courses", setCourses))}
           {sectionStatus.courses === "loaded" && courses.length > 0 ? <Slider {...coursesSettings}>
             {courses.map((item, index) => (
               <div key={`${item.slug ?? item.title ?? index}`}>
                 <div className="landing-card landing-card-hover group m-3 mb-10 overflow-hidden relative border border-slate-200 bg-white transition duration-500 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(101,86,255,0.18)] hover:bg-slate-50">
                   <div className="relative overflow-hidden">
                     <Image
-                      src={`${getImagePrefix()}${item.thumbnail ?? "/images/courses/ai.png"}`}
-                      alt={item.title ?? "AI Academy course"}
+                      src={`${getImagePrefix()}${item.thumbnail ?? "/images/banner/Hero.png"}`}
+                      alt={item.title ?? "Academy program"}
                       width={389}
                       height={262}
                       className="landing-card-image h-56 w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                     />
                     <div className="absolute right-4 bottom-4 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 px-4 py-3 text-center text-white shadow-xl shadow-violet-400/20 transition duration-500 group-hover:-translate-y-1 group-hover:scale-105">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em]">{item.level ?? "Featured"}</p>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em]">{item.level ?? item.group ?? "Program"}</p>
                     </div>
                   </div>
 
                   <div className="space-y-5 p-6">
-                    <Link href={`/courses/${item.slug ?? ""}`} className="text-xl font-semibold text-slate-950 transition-colors duration-300 hover:text-primary">
+                    <Link href={`/admissions?program=${encodeURIComponent(item.title ?? "")}`} className="text-xl font-semibold text-slate-950 transition-colors duration-300 hover:text-primary">
                       {item.title}
                     </Link>
-                    <p className="text-sm text-slate-700">{item.category?.name ?? "AI Academy"}</p>
+                    <p className="text-sm text-slate-700">{item.category?.name ?? item.group ?? academy.shortName}</p>
 
                     <div className="flex items-center justify-between border-b border-slate-100 pb-5">
                       <div>
                         <p className="text-lg font-semibold text-violet-600">4.8</p>
                         {renderStars(4.8)}
                       </div>
-                      <p className="text-2xl font-semibold text-slate-900">PKR {Number(item.price ?? 0).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-slate-700">Contact admissions for the fee schedule</p>
                     </div>
 
                     <div className="flex items-center justify-between text-sm text-slate-700">
@@ -386,7 +394,7 @@ const LandingPage = () => {
                     />
                     <div>
                       <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                      <p className="text-sm text-slate-600">{item.role ?? "AI Academy Student"}</p>
+                      <p className="text-sm text-slate-600">{item.role ?? "SRA Student"}</p>
                     </div>
                   </div>
                   <p className="mb-5 text-sm leading-7 text-slate-700">{item.review}</p>
