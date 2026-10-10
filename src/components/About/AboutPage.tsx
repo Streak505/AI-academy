@@ -3,6 +3,8 @@ import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { getImagePrefix } from "@/utils/util";
 import { academy } from "@/config/academy";
+import { getPublicInstructors } from "@/lib/public-data";
+import { FacultyCards, FacultyPreviewLink } from "@/components/Academy/FacultyCards";
 
 const highlights = [
   {
@@ -32,7 +34,8 @@ const stats = [
   { value: "6", label: "Mission commitments" },
 ];
 
-const AboutPage = () => {
+const AboutPage = async () => {
+  const faculty = await getPublicInstructors();
   return (
     <main className="bg-slate-50 text-slate-800">
       <section className="bg-slateGray pt-28 pb-20 sm:pt-32 sm:pb-24">
@@ -92,6 +95,15 @@ const AboutPage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-20 sm:py-24">
+        <div className="container-standard">
+          <p className="landing-pill mb-4">Our faculty</p>
+          <h2 className="landing-section-title">Meet the people who support our students.</h2>
+          <div className="mt-8"><FacultyCards result={faculty} preview /></div>
+          <FacultyPreviewLink />
         </div>
       </section>
 
@@ -160,8 +172,8 @@ const AboutPage = () => {
             <p className="mx-auto mt-4 max-w-2xl text-base text-white/85">
               Discover programs designed to help you learn, grow, and step confidently into a rewarding career.
             </p>
-            <Link href="/" className="mt-8 inline-flex rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-slate-100 no-underline">
-              View our courses
+            <Link href="/programs" className="mt-8 inline-flex rounded-full bg-white px-6 py-3 font-semibold text-primary transition hover:bg-slate-100 no-underline">
+              View our programs
             </Link>
           </div>
         </div>

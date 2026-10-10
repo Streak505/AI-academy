@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { academy } from "@/config/academy";
+import { AcademyMap } from "@/components/Academy/AcademyMap";
 
 const ContactPage = () => {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
@@ -17,13 +18,14 @@ const ContactPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setStatus({ type: "idle", message: "" });
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, website: formData.get("website") }),
       });
 
       const data = await response.json();
@@ -94,6 +96,7 @@ const ContactPage = () => {
               <h2 className="landing-section-title">Send us a message</h2>
               <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-700">Name
                   <input
                     name="name"
                     value={form.name}
@@ -103,6 +106,8 @@ const ContactPage = () => {
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary"
                     required
                   />
+                  </label>
+                  <label className="text-sm font-medium text-slate-700">Email
                   <input
                     name="email"
                     value={form.email}
@@ -112,8 +117,10 @@ const ContactPage = () => {
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary"
                     required
                   />
+                  </label>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-700">Phone (optional)
                   <input
                     name="phone"
                     value={form.phone}
@@ -122,6 +129,8 @@ const ContactPage = () => {
                     placeholder="Phone"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary"
                   />
+                  </label>
+                  <label className="text-sm font-medium text-slate-700">Subject
                   <input
                     name="subject"
                     value={form.subject}
@@ -131,7 +140,9 @@ const ContactPage = () => {
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary"
                     required
                   />
+                  </label>
                 </div>
+                <label className="block text-sm font-medium text-slate-700">Message
                 <textarea
                   name="message"
                   value={form.message}
@@ -141,9 +152,11 @@ const ContactPage = () => {
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary"
                   required
                 />
+                </label>
+                <div className="hidden" aria-hidden="true"><label>Leave this field empty<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
 
                 {status.message ? (
-                  <div className={`rounded-2xl px-4 py-3 text-sm ${status.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                  <div role={status.type === "success" ? "status" : "alert"} className={`rounded-2xl px-4 py-3 text-sm ${status.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                     {status.message}
                   </div>
                 ) : null}
@@ -171,6 +184,7 @@ const ContactPage = () => {
               </div>
             </div>
           </div>
+          <div className="mt-10"><AcademyMap /></div>
         </div>
       </section>
     </main>

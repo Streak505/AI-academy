@@ -8,7 +8,7 @@ const CounselingBookingSchema = new Schema(
     requestedBy: { type: Schema.Types.ObjectId, ref: "User", default: null, index: true },
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
-    email: { type: String, default: "", trim: true, lowercase: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
     type: { type: String, enum: COUNSELING_TYPES, required: true },
     preferredDate: {
       type: Date,
@@ -25,7 +25,7 @@ const CounselingBookingSchema = new Schema(
       required: true,
       validate: {
         validator(value: string) {
-          return /^(17|18|19):[0-5]\d$/.test(value);
+          return /^(17|18|19):(00|30)$/.test(value);
         },
         message: "Counseling bookings must be between 17:00 and 20:00.",
       },

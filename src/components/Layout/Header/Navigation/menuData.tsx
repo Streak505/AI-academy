@@ -6,7 +6,7 @@ export const headerData: HeaderItem[] = [
   { label: "Programs", href: "/programs" },
   { label: "Career Counseling", href: "/career-counseling" },
   { label: "Entrepreneurship", href: "/entrepreneurship" },
-  { label: "IELTS & International", href: "/ielts-international" },
+  { label: "IELTS & International", href: "/international" },
   { label: "Professional Courses", href: "/professional-courses" },
   { label: "CSR", href: "/csr" },
   { label: "Gallery", href: "/gallery" },

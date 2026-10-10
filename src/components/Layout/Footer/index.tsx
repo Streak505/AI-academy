@@ -13,6 +13,7 @@ const socialLinks = [
 const footer = () => {
   const phoneConfigured = !academy.phone.startsWith("TODO_REPLACE");
   const emailConfigured = !academy.email.startsWith("TODO_REPLACE");
+  const mapsConfigured = academy.mapsLink.startsWith("https://");
   return (
     <footer className="border-t border-slate-800 bg-slate-950 py-12 text-slate-300 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -44,7 +45,7 @@ const footer = () => {
           </div>
           <div>
             <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Contact</h3>
-            <div className="space-y-5 text-sm"><div className="flex gap-3"><Icon icon="tabler:map-pin" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" /><span className="text-slate-400">{academy.address}</span></div><div className="flex gap-3"><Icon icon="tabler:phone" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" />{phoneConfigured ? <a href={`tel:${academy.phone}`} className="text-slate-400 transition hover:text-amber-300">{academy.phone}</a> : <span>{academy.phone}</span>}</div><div className="flex gap-3"><Icon icon="tabler:mail" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" />{emailConfigured ? <a href={`mailto:${academy.email}`} className="text-slate-400 transition hover:text-amber-300">{academy.email}</a> : <span>{academy.email}</span>}</div></div>
+            <div className="space-y-5 text-sm"><div className="flex gap-3"><Icon icon="tabler:map-pin" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" /><span className="text-slate-400">{academy.address}</span></div><div className="flex gap-3"><Icon icon="tabler:phone" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" />{phoneConfigured ? <a href={`tel:${academy.phone}`} className="text-slate-400 transition hover:text-amber-300">{academy.phone}</a> : <span>{academy.phone}</span>}</div><div className="flex gap-3"><Icon icon="tabler:mail" className="mt-0.5 shrink-0 text-xl text-amber-300" aria-hidden="true" />{emailConfigured ? <a href={`mailto:${academy.email}`} className="text-slate-400 transition hover:text-amber-300">{academy.email}</a> : <span>{academy.email}</span>}</div><div className="text-slate-400">Hours: {academy.timing.days}, {academy.timing.from}–{academy.timing.to}</div>{mapsConfigured ? <a href={academy.mapsLink} target="_blank" rel="noreferrer" className="inline-block font-semibold text-amber-300 underline">Google Maps</a> : null}</div>
           </div>
         </div>
 

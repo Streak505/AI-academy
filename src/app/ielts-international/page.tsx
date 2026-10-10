@@ -1,7 +1,6 @@
-import { ProgramDirectory } from "@/components/Academy/PublicCollections";
-import { publicMetadata } from "@/lib/seo";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata = publicMetadata("IELTS & International", "Prepare for IELTS, PTE, Duolingo English tests, and study abroad with expert guidance.", "/ielts-international");
-export default function InternationalProgramsPage() {
-  return <ProgramDirectory group="international" />;
+// DEPRECATED: legacy route retained as a redirect to the canonical international page.
+export default function LegacyInternationalRoute() {
+  permanentRedirect("/international");
 }

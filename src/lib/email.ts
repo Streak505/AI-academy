@@ -1,3 +1,6 @@
+import nodemailer from "nodemailer";
+import { academy } from "@/config/academy";
+
 type EmailPayload = {
   to: string;
   subject: string;
@@ -12,13 +15,34 @@ function getProviderName() {
 export async function sendEmail({ to, subject, html: _html, text }: EmailPayload) {
   const providerName = getProviderName();
 
-  if (providerName === "console" || !process.env.EMAIL_HOST) {
+  if (providerName === "console" && process.env.NODE_ENV !== "production") {
     console.info(`[email:${providerName}] ${subject} -> ${to}`);
     console.info(text);
     return { ok: true, provider: providerName };
   }
 
-  return { ok: true, provider: providerName, messageId: `email-${Date.now()}` };
+  const host = process.env.EMAIL_HOST?.trim();
+  const port = Number(process.env.EMAIL_PORT || 587);
+  if (providerName !== "smtp" || !host || !Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("Email delivery requires EMAIL_PROVIDER=smtp, a valid EMAIL_HOST, and a valid EMAIL_PORT.");
+  }
+
+  const user = process.env.EMAIL_USER?.trim();
+  const password = process.env.EMAIL_PASS;
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    ...(user && password ? { auth: { user, pass: password } } : {}),
+  });
+  const result = await transporter.sendMail({
+    from: process.env.EMAIL_FROM?.trim() || user || academy.email,
+    to,
+    subject,
+    html: _html,
+    text,
+  });
+  return { ok: true, provider: providerName, messageId: result.messageId };
 }
 
 export async function sendVerificationEmail({ name, email, verificationUrl }: { name: string; email: string; verificationUrl: string }) {
@@ -71,4 +95,3 @@ export async function sendWelcomeEmail({ name, email }: { name: string; email: s
     text: `Welcome ${name || "friend"}! Your account is active and ready to explore ${academy.name}.`,
   });
 }
-import { academy } from "@/config/academy";

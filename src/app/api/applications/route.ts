@@ -81,6 +81,14 @@ export async function POST(request: NextRequest) {
     if (body.documents !== undefined && (!Array.isArray(body.documents) || !body.documents.every(isAcademyBlobDocument))) {
       return Response.json({ success: false, message: "Documents must be valid Vercel Blob URLs with file metadata." }, { status: 400 });
     }
+    if (body.concessionRequest !== undefined) {
+      const request = body.concessionRequest;
+      if (!request || typeof request !== "object" || Array.isArray(request)
+        || !["none", "orphan", "widow_child", "merit", "other"].includes(request.type)
+        || (request.note !== undefined && (typeof request.note !== "string" || request.note.length > 1000))) {
+        return Response.json({ success: false, message: "Concession request details are invalid." }, { status: 400 });
+      }
+    }
 
     const program = await Program.findOne({
       $or: [{ title: programTitle }, { slug: programTitle }],

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useCallback, useEffect, useState } from "react";
-import { EmptyState, ErrorState, LoadingState } from "@/components/Common/DataState";
+import { useEffect, useState } from "react";
+import { EmptyState, ErrorState } from "@/components/Common/DataState";
 
-type AdmissionProgram = { _id: string; title: string; slug: string; group: string };
+type AdmissionProgram = { id: string; title: string; slug: string; group: string };
 
 const steps = [
   {
@@ -25,9 +25,10 @@ const steps = [
   },
 ];
 
-const AdmissionsPage = () => {
-  const [programs, setPrograms] = useState<AdmissionProgram[]>([]);
-  const [programStatus, setProgramStatus] = useState<"loading" | "loaded" | "error">("loading");
+const AdmissionsPage = ({ initialProgram = "", initialPrograms = [], programLoadError = false }: { initialProgram?: string; initialPrograms?: AdmissionProgram[]; programLoadError?: boolean }) => {
+  const requestedProgram = initialProgram;
+  const [programs] = useState<AdmissionProgram[]>(initialPrograms);
+  const programStatus = programLoadError ? "error" : "loaded";
   const [form, setForm] = useState({
     applicantName: "",
     fatherName: "",
@@ -41,31 +42,19 @@ const AdmissionsPage = () => {
     qualification: "",
     city: "",
     message: "",
+    concessionType: "none",
+    concessionNote: "",
   });
   const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message: string }>({
     type: "idle",
     message: "",
   });
 
-  const loadPrograms = useCallback(async () => {
-    setProgramStatus("loading");
-    try {
-      const response = await fetch("/api/programs?limit=100", { cache: "no-store" });
-      const result = await response.json();
-      if (!response.ok || !result.success || !Array.isArray(result.data?.items)) {
-        throw new Error(result.message || "Unable to load programs.");
-      }
-      setPrograms(result.data.items);
-      setProgramStatus("loaded");
-    } catch (error) {
-      console.error("Unable to load admission programs:", error);
-      setProgramStatus("error");
-    }
-  }, []);
-
   useEffect(() => {
-    void loadPrograms();
-  }, [loadPrograms]);
+    if (programStatus !== "loaded" || !requestedProgram) return;
+    const matchingProgram = programs.find((program) => program.slug === requestedProgram || program.title === requestedProgram);
+    if (matchingProgram) setForm((current) => current.course ? current : { ...current, course: matchingProgram.slug });
+  }, [programStatus, programs, requestedProgram]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((current) => ({
@@ -82,7 +71,10 @@ const AdmissionsPage = () => {
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          concessionRequest: { type: form.concessionType, note: form.concessionNote },
+        }),
       });
 
       const data = await response.json();
@@ -105,6 +97,8 @@ const AdmissionsPage = () => {
         qualification: "",
         city: "",
         message: "",
+        concessionType: "none",
+        concessionNote: "",
       });
     } catch (error) {
       setStatus({
@@ -189,15 +183,28 @@ const AdmissionsPage = () => {
                   <input name="dob" value={form.dob} onChange={handleChange} type="date" aria-label="Student date of birth" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
                   <select name="course" value={form.course} onChange={handleChange} aria-label="Select a program" disabled={programStatus !== "loaded" || programs.length === 0} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" required>
                     <option value="">Select a program</option>
-                    {programs.map((program) => <option key={program._id} value={program.slug}>{program.title}</option>)}
+                    {programs.map((program) => <option key={program.id} value={program.slug}>{program.title}</option>)}
                   </select>
                 </div>
-                {programStatus === "loading" ? <LoadingState label="Loading programs" /> : null}
-                {programStatus === "error" ? <ErrorState message="Unable to load programs. Please retry before submitting." onRetry={() => void loadPrograms()} /> : null}
+                {programStatus === "error" ? <ErrorState message="Unable to load programs. Please retry before submitting." /> : null}
                 {programStatus === "loaded" && programs.length === 0 ? <EmptyState title="No programs available" message="Admissions are not available until a program is published." /> : null}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <input name="previousSchool" value={form.previousSchool} onChange={handleChange} type="text" placeholder="Previous school" aria-label="Previous school" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
                   <input name="city" value={form.city} onChange={handleChange} type="text" placeholder="City" aria-label="City" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
+                </div>
+                <div id="concession" className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-700">Concession request (optional)
+                    <select name="concessionType" value={form.concessionType} onChange={handleChange} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none focus:border-primary">
+                      <option value="none">No concession request</option>
+                      <option value="orphan">Orphan student</option>
+                      <option value="widow_child">Child of a widow</option>
+                      <option value="merit">Merit scholarship</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-medium text-slate-700">Concession details (optional)
+                    <input name="concessionNote" value={form.concessionNote} onChange={handleChange} maxLength={1000} type="text" className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none focus:border-primary" />
+                  </label>
                 </div>
                 <textarea name="message" value={form.message} onChange={handleChange} placeholder="Tell us about your goals" aria-label="Tell us about your goals" rows={5} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-primary" />
 
