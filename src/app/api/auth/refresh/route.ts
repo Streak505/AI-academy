@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Session expired or invalid." }, { status: 401 });
     }
 
-    const accessToken = await signAccessToken({ sub: String(user._id), role: user.role, email: user.email });
+    const accessToken = await signAccessToken({ sub: String(user._id), role: user.role, email: user.email, forcePasswordChange: user.forcePasswordChange });
     const rotatedRefreshToken = await signRefreshToken({ sub: String(user._id), role: user.role, email: user.email });
     const response = NextResponse.json({ success: true, user: toSafeUser(user) });
     setAuthCookies(response, accessToken, rotatedRefreshToken);

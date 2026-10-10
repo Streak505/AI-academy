@@ -13,6 +13,7 @@ const documentSchema = new Schema(
 
 const AdmissionSchema = new Schema(
   {
+    applicationRef: { type: String, unique: true, sparse: true, trim: true },
     applicant: {
       type: new Schema(
         {
@@ -58,6 +59,7 @@ const AdmissionSchema = new Schema(
     adminNotes: { type: String, default: "" },
     student: { type: Schema.Types.ObjectId, ref: "Student", default: null },
     submittedAt: { type: Date, default: Date.now, index: true },
+    consentAt: { type: Date, default: null },
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     applicantName: { type: String, default: "" },
     email: { type: String, default: "", lowercase: true },
@@ -71,5 +73,6 @@ const AdmissionSchema = new Schema(
 );
 
 AdmissionSchema.index({ status: 1, submittedAt: -1 });
+AdmissionSchema.index({ "applicant.program": 1, "concessionRequest.type": 1, submittedAt: -1 });
 
 export const Admission = models.Admission || model("Admission", AdmissionSchema);

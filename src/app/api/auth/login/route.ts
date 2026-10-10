@@ -37,13 +37,15 @@ export async function POST(request: Request) {
     await user.save();
 
     const role = user.role as "ADMIN" | "INSTRUCTOR" | "STUDENT" | "PARENT" | "MODERATOR";
-    const accessToken = await signAccessToken({ sub: String(user._id), role, email: user.email });
+    const accessToken = await signAccessToken({ sub: String(user._id), role, email: user.email, forcePasswordChange: user.forcePasswordChange });
     const refreshToken = await signRefreshToken({ sub: String(user._id), role, email: user.email });
     const response = NextResponse.json({
       success: true,
       role,
       user: toSafeUser(user),
-      redirect: role === "ADMIN" ? "/admin/dashboard" : role === "INSTRUCTOR" ? "/instructor/dashboard" : role === "PARENT" ? "/parent/dashboard" : "/student/dashboard",
+      redirect: user.forcePasswordChange
+        ? "/profile?forcePasswordChange=1"
+        : role === "ADMIN" ? "/admin/dashboard" : role === "INSTRUCTOR" ? "/instructor/dashboard" : role === "PARENT" ? "/parent/dashboard" : "/student/dashboard",
     });
 
     setAuthCookies(response, accessToken, refreshToken);

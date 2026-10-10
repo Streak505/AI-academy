@@ -15,6 +15,7 @@ const UserSchema = new Schema(
     role: { type: String, enum: USER_ROLES, default: "STUDENT" },
     status: { type: String, enum: USER_STATUSES, default: "PENDING_VERIFICATION" },
     emailVerified: { type: Boolean, default: false },
+    forcePasswordChange: { type: Boolean, default: false },
     authProvider: { type: String, enum: AUTH_PROVIDERS, default: "local" },
     providerAccountId: { type: String, default: "" },
     isActive: { type: Boolean, default: true },

@@ -43,6 +43,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
+  if (payload.forcePasswordChange && pathname !== "/profile") {
+    return NextResponse.redirect(new URL("/profile?forcePasswordChange=1", request.url));
+  }
+
   if (pathname.startsWith("/admin") && payload.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", request.url));
   }

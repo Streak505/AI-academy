@@ -16,6 +16,11 @@ export const academy = {
     from: "5:00 PM",
     to: "8:00 PM",
   },
+  concessions: {
+    orphan: { defaultPercent: 0 }, // TODO_REPLACE with the academy-approved percentage.
+    widow_child: { defaultPercent: 0 }, // TODO_REPLACE with the academy-approved percentage.
+    merit: { defaultPercent: 0 }, // TODO_REPLACE with the academy-approved percentage.
+  },
   phone: "TODO_REPLACE_PHONE",
   whatsappNumber: "TODO_REPLACE_923001234567",
   email: "TODO_REPLACE_EMAIL",

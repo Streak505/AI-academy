@@ -52,10 +52,11 @@ type TokenPayload = {
   email?: string;
   jti?: string;
   type: "access" | "refresh";
+  forcePasswordChange?: boolean;
 };
 
-export async function signAccessToken({ sub, role, email }: { sub: string; role: Role; email?: string }) {
-  return jwt.sign({ sub, role, email, type: "access", jti: generateSecureToken(16) }, getEnv("JWT_SECRET"), {
+export async function signAccessToken({ sub, role, email, forcePasswordChange = false }: { sub: string; role: Role; email?: string; forcePasswordChange?: boolean }) {
+  return jwt.sign({ sub, role, email, forcePasswordChange, type: "access", jti: generateSecureToken(16) }, getEnv("JWT_SECRET"), {
     expiresIn: "15m",
     issuer: "shahzaib-royal-academy",
     algorithm: "HS256",
@@ -104,6 +105,7 @@ export function toSafeUser(user: any) {
     avatar: user?.avatar ?? user?.profileImage ?? "",
     status: user?.status ?? (user?.isActive === false ? "SUSPENDED" : "ACTIVE"),
     emailVerified: Boolean(user?.emailVerified),
+    forcePasswordChange: Boolean(user?.forcePasswordChange),
     authProvider: user?.authProvider ?? "local",
     createdAt: user?.createdAt ? new Date(user.createdAt).toISOString() : undefined,
     updatedAt: user?.updatedAt ? new Date(user.updatedAt).toISOString() : undefined,
@@ -132,6 +134,7 @@ export async function getCurrentUser() {
     status: user.status ?? "ACTIVE",
     emailVerified: Boolean(user.emailVerified),
     authProvider: user.authProvider ?? "local",
+    forcePasswordChange: Boolean(user.forcePasswordChange),
   };
 }
 
@@ -147,6 +150,7 @@ export async function requireRole(role: Role | Role[]) {
   if (!user || !roles.includes(user.role as Role)) {
     throw new Error("Forbidden.");
   }
+  if (user.forcePasswordChange) throw new Error("A password change is required.");
   return user;
 }
 

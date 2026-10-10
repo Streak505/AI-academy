@@ -12,10 +12,14 @@ const StudentSchema = new Schema(
       default: null,
       index: true,
       validate: {
-        validator: async (value: unknown) => {
+        validator: async function (this: { $session?: () => import("mongoose").ClientSession | null }, value: unknown) {
           if (!value) return true;
           const UserModel = models.User;
-          return UserModel ? Boolean(await UserModel.exists({ _id: value, role: "PARENT" })) : false;
+          if (!UserModel) return false;
+          const query = UserModel.findOne({ _id: value, role: "PARENT" }).select("_id");
+          const session = this.$session?.();
+          if (session) query.session(session);
+          return Boolean(await query.lean());
         },
         message: "Student guardian must be a user with the PARENT role.",
       },
