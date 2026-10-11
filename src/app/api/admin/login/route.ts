@@ -6,22 +6,29 @@ import { checkRateLimit, clearRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    let body: Record<string, unknown>;
+    let body: unknown;
     try {
       body = await request.json();
     } catch {
       return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
     }
-    const email = normalizeEmail(String(body?.email || ""));
-    const password = String(body?.password || "");
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    if (typeof input.website === "string" && input.website.trim()) {
+      return NextResponse.json({ success: true, data: { accepted: true } });
+    }
+    const email = typeof input.email === "string" ? normalizeEmail(input.email) : "";
+    const password = typeof input.password === "string" ? input.password : "";
 
     if (!email || !password) {
       return NextResponse.json({ success: false, message: "Email and password are required." }, { status: 400 });
     }
 
-    const rateLimit = checkRateLimit(`admin-login:${email}`, 5, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(`admin-login:${email}`, 5, 15 * 60 * 1000);
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const ipRateLimit = checkRateLimit(`admin-login-ip:${ip}`, 10, 15 * 60 * 1000);
+    const ipRateLimit = await checkRateLimit(`admin-login-ip:${ip}`, 10, 15 * 60 * 1000);
     if (!rateLimit.allowed || !ipRateLimit.allowed) {
       return NextResponse.json({ success: false, message: "Too many admin login attempts. Please wait a moment and try again." }, { status: 429 });
     }
@@ -71,8 +78,8 @@ export async function POST(request: Request) {
       redirect: user.forcePasswordChange ? "/profile?forcePasswordChange=1" : "/admin/dashboard",
     });
     setAuthCookies(response, accessToken, refreshToken);
-    clearRateLimit(`admin-login:${email}`);
-    clearRateLimit(`admin-login-ip:${ip}`);
+    await clearRateLimit(`admin-login:${email}`);
+    await clearRateLimit(`admin-login-ip:${ip}`);
     return response;
   } catch (error) {
     console.error("Admin login failed:", error);

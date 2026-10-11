@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const admin = await requireAdmin();
     if (!admin) return NextResponse.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
-    const limit = checkRateLimit(`account-password-reset:${admin.id}`, 10, 60 * 60 * 1000);
+    const limit = await checkRateLimit(`account-password-reset:${admin.id}`, 10, 60 * 60 * 1000);
     if (!limit.allowed) return NextResponse.json({ success: false, message: "Too many password resets. Try again later." }, { status: 429 });
     const { id } = await params;
     if (!isValidObjectId(id)) return NextResponse.json({ success: false, message: "Invalid user id." }, { status: 400 });

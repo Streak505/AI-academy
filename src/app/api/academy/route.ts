@@ -9,6 +9,7 @@ export async function GET() {
     return ok({
       name: settings.name,
       shortName: settings.shortName,
+      locality: settings.locality,
       tagline: settings.tagline,
       vision: settings.vision,
       mission: settings.mission,

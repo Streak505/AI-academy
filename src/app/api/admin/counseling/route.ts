@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { fail, ok, requireAuth } from "@/lib/api";
-import { isValidObjectId, isValidString } from "@/lib/validations";
+import { isValidObjectId } from "@/lib/validations";
 import { CounselingBooking } from "@/models/CounselingBooking";
 import { CounselingSettings } from "@/models/CounselingSettings";
 import { reserveCounselingSlot, releaseCounselingSlot } from "@/lib/counseling-slots";
 import { recordAdminAudit } from "@/lib/admin-audit";
-import { sendEmail } from "@/lib/email";
-import { getAcademySettings } from "@/lib/academy-settings";
+import { sendCounselingConfirmationEmail } from "@/lib/email";
 
 const statuses = ["Requested", "Confirmed", "Completed", "Cancelled"] as const;
 const types = ["Career Assessment", "Degree Selection", "University Selection", "Parent Counseling", "Scholarship Guidance", "Study Abroad"] as const;
@@ -136,12 +135,14 @@ export async function PATCH(request: NextRequest) {
       await recordAdminAudit(auth.user, request, "COUNSELING_NOTES_UPDATED", "CounselingBooking", String(booking._id));
     }
     if (changedStatus || changedSlot) {
-      const academy = await getAcademySettings();
-      await sendEmail({
+      await sendCounselingConfirmationEmail({
         to: booking.email,
-        subject: `Counseling session update — ${academy.name}`,
-        html: "",
-        text: `Hello ${booking.name},\n\nYour ${booking.type} counseling session is now ${booking.status.toLowerCase()}.\nDate: ${booking.preferredDate.toISOString().slice(0, 10)}\nTime: ${booking.preferredSlot} (Asia/Karachi)\n\n${booking.adminNotes ? `Note: ${booking.adminNotes}` : ""}`,
+        name: booking.name,
+        type: booking.type,
+        date: booking.preferredDate.toISOString().slice(0, 10),
+        time: booking.preferredSlot,
+        status: booking.status,
+        ...(booking.adminNotes ? { note: booking.adminNotes } : {}),
       });
     }
     return ok({ id: String(booking._id), status: booking.status, preferredDate: booking.preferredDate, preferredSlot: booking.preferredSlot });

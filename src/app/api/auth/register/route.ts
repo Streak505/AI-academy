@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Password must be at least 8 characters and include letters and numbers." }, { status: 400 });
     }
 
-    const rateLimit = checkRateLimit(`register:${email}`, 5, 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(`register:${email}`, 5, 60 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json({ success: false, message: "Too many sign up attempts. Please wait a moment and try again." }, { status: 429 });
     }

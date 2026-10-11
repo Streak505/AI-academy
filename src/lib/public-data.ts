@@ -3,6 +3,7 @@ import { Program, PROGRAM_GROUPS } from "@/models/Program";
 import { CsrInitiative } from "@/models/CsrInitiative";
 import { GalleryItem } from "@/models/GalleryItem";
 import { Instructor } from "@/models/Instructor";
+import { Course } from "@/models/Course";
 
 export type PublicProgram = {
   id: string;
@@ -60,6 +61,18 @@ export async function getPublicPrograms(group?: (typeof PROGRAM_GROUPS)[number])
     };
   } catch (error) {
     console.error("Unable to read published programs:", error);
+    return { success: false };
+  }
+
+}
+
+export async function getPublishedCourseSlugs(): Promise<PublicResult<string[]>> {
+  try {
+    await connectDB();
+    const courses = await Course.find({ isPublished: true }).select("slug").lean();
+    return { success: true, data: courses.map((course) => course.slug) };
+  } catch (error) {
+    console.error("Unable to read published course slugs:", error);
     return { success: false };
   }
 }

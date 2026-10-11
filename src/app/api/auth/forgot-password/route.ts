@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Email is required." }, { status: 400 });
     }
 
-    const rateLimit = checkRateLimit(`forgot-password:${email}`, 3, 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(`forgot-password:${email}`, 3, 60 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json({ success: false, message: "Too many password reset requests. Please wait a bit and try again." }, { status: 429 });
     }

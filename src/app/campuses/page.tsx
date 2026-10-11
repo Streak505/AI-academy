@@ -3,13 +3,18 @@ import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Campus } from "@/models/Campus";
 import { getImagePrefix } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
+import { publicMetadata } from "@/lib/seo";
 
 // DEPRECATED: not part of Shahzaib Royal Academy scope
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Campuses" };
+export async function generateMetadata() {
+  const academy = await getAcademySettings();
+  return publicMetadata("Campuses", `Find ${academy.name} learning spaces${academy.locality ? ` in ${academy.locality}` : ""} and connect with your local community.`, "/campuses");
+}
 
 export default async function CampusesPage() {
+  const academy = await getAcademySettings();
   let campuses: Array<{ _id: string; name: string; city: string; address?: string; image?: string; facilities?: string[] }> = [];
   let hasError = false;
   try { await connectToDatabase(); campuses = (await Campus.find({ isActive: true }).sort({ city: 1 }).lean()).map((campus) => ({ ...campus, _id: String(campus._id) })); } catch (error) { hasError = true; logMongoError("Campuses page", error); }

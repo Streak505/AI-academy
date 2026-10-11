@@ -4,13 +4,12 @@ import { connectDB } from "@/lib/db";
 import { hashPassword, generateSecureToken } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin-auth";
 import { nextCounterValue } from "@/lib/counters";
-import { sendEmail } from "@/lib/email";
+import { sendEnrollmentEmail } from "@/lib/email";
 import { Admission } from "@/models/Admission";
 import { AuditLog } from "@/models/AuditLog";
 import { Student } from "@/models/Student";
 import { User } from "@/models/User";
 import { isValidObjectId } from "@/lib/validations";
-import { getAcademySettings } from "@/lib/academy-settings";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -156,23 +155,15 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ success: true, data: { applicationRef: result.applicationRef, regNo: result.regNo, alreadyEnrolled: true } });
     }
 
-    const parentCredentials = result.parentPassword
-      ? `\nParent login: ${result.parentEmail}\nTemporary password: ${result.parentPassword}\n`
-      : `\nYour existing parent account is linked: ${result.parentEmail}\n`;
-    const passwordNotice = result.parentPassword
-      ? "Both accounts must change their temporary password after signing in."
-      : "The student account must change its temporary password after signing in.";
-    const academy = await getAcademySettings();
-    try {
-      await sendEmail({
-        to: result.parentEmail,
-        subject: `Enrollment complete — ${academy.name}`,
-        html: `<p>${applicationGreeting(result.applicationRef, academy.name)}</p><p>Student registration number: <strong>${result.regNo}</strong></p><p>Student login: ${result.studentEmail}<br>Temporary password: ${result.studentPassword}</p>${result.parentPassword ? `<p>Parent login: ${result.parentEmail}<br>Temporary password: ${result.parentPassword}</p>` : "<p>Your existing parent account has been linked.</p>"}<p>${passwordNotice}</p>`,
-        text: `${applicationGreeting(result.applicationRef, academy.name)}\nStudent registration number: ${result.regNo}\nStudent login: ${result.studentEmail}\nTemporary password: ${result.studentPassword}${parentCredentials}\n${passwordNotice}`,
-      });
-    } catch (emailError) {
-      console.error(`Enrollment email failed for ${result.applicationRef}:`, emailError);
-    }
+    await sendEnrollmentEmail({
+      to: result.parentEmail,
+      reference: result.applicationRef,
+      regNo: result.regNo,
+      studentEmail: result.studentEmail,
+      studentPassword: result.studentPassword,
+      parentEmail: result.parentEmail,
+      ...(result.parentPassword ? { parentPassword: result.parentPassword } : {}),
+    });
 
     return NextResponse.json({
       success: true,
@@ -195,8 +186,4 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       message: statusCode === 500 ? "Unable to enroll this application." : error instanceof Error ? error.message : "Unable to enroll this application.",
     }, { status: statusCode });
   }
-}
-
-function applicationGreeting(reference: string, academyName: string) {
-  return reference ? `Your application ${reference} has been enrolled.` : `Your application has been enrolled at ${academyName}.`;
 }

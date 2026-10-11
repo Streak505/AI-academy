@@ -37,6 +37,10 @@ const admissionText = (min: number, max: number, label: string) =>
   z.string().trim().min(min, `${label} is required.`).max(max, `${label} is too long.`);
 const optionalAdmissionText = (max: number) => z.string().trim().max(max);
 
+export function sanitizeText(value: string) {
+  return value.replace(/<[^>]*>/g, "").replace(/\p{Cc}/gu, "").trim();
+}
+
 export const admissionDocumentSchema = z.object({
   kind: z.enum(ADMISSION_DOCUMENT_KINDS),
   uploadId: z.string().regex(/^admissions\/[a-f0-9-]{36}\/[^/]+$/i, "Invalid uploaded document."),

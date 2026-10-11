@@ -51,7 +51,7 @@ export function GalleryCards({ items, limit }: { items: PublicGalleryItem[]; lim
     <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
       {visibleItems.map((item) => (
         <article key={item.id} className="mb-5 break-inside-avoid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <Image src={item.imageUrl} alt={item.caption || item.title} width={800} height={600} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" unoptimized className="h-auto w-full object-cover" />
+          <Image src={item.imageUrl} alt={item.caption || item.title} width={800} height={600} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" className="h-auto w-full object-cover" />
           <div className="p-4"><p className="text-xs font-semibold uppercase text-gold">{item.category}</p><h3 className="mt-1 font-semibold text-slate-900">{item.title}</h3>{item.caption ? <p className="mt-2 text-sm text-slate-600">{item.caption}</p> : null}</div>
         </article>
       ))}

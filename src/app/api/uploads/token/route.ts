@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "The upload request exceeds the 4.5 MB server limit." }, { status: 413 });
     }
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const limit = checkRateLimit(`admission-upload:${ip}`, 20, 60 * 60 * 1000);
+    const limit = await checkRateLimit(`admission-upload:${ip}`, 20, 60 * 60 * 1000);
     if (!limit.allowed) {
       return NextResponse.json({ success: false, message: "Too many document uploads. Please try again later." }, { status: 429 });
     }

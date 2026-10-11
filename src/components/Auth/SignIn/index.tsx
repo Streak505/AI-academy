@@ -13,6 +13,7 @@ const Signin = () => {
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
+    website: "",
     checkboxToggle: false,
   });
   const [loading, setLoading] = useState(false);
@@ -56,6 +57,17 @@ const Signin = () => {
       </span>
 
       <form onSubmit={loginUser} className="text-left">
+        <div className="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
+          <label htmlFor="signin-website">Leave this field empty</label>
+          <input
+            id="signin-website"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={loginData.website}
+            onChange={(e) => setLoginData({ ...loginData, website: e.target.value })}
+          />
+        </div>
         <div className="mb-[22px]">
           <label htmlFor="signin-email" className="mb-2 block text-sm font-semibold text-slate-700">Email address</label>
           <input

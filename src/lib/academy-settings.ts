@@ -6,6 +6,7 @@ import { AcademySettings } from "@/models/AcademySettings";
 export type AcademySettingsValue = {
   name: string;
   shortName: string;
+  locality: string;
   tagline: string;
   vision: string;
   mission: readonly string[];
@@ -40,6 +41,7 @@ async function loadAcademySettings(): Promise<AcademySettingsValue> {
   return {
     name: academy.name,
     shortName: academy.shortName,
+    locality: settingString(academy.locality, ""),
     tagline: academy.tagline,
     vision: academy.vision,
     mission: academy.mission,

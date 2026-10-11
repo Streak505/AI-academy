@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { ContactMessage } from "@/models/ContactMessage";
-import { validateEmail, isValidString, isValidObjectId } from "@/lib/validations";
+import { validateEmail, isValidString, isValidObjectId, sanitizeText } from "@/lib/validations";
 import { requireAdminResponse } from "@/lib/admin-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { sendEmail } from "@/lib/email";
+import { sendContactAutoReplyEmail, sendEmail } from "@/lib/email";
 import { requireAdmin } from "@/lib/admin-auth";
 import { recordAdminAudit } from "@/lib/admin-audit";
 import { getAcademySettings } from "@/lib/academy-settings";
@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const limit = checkRateLimit(`contact:${clientIp}`, 5, 60 * 60 * 1000);
+    const limit = await checkRateLimit(`contact:${clientIp}`, 5, 60 * 60 * 1000);
     if (!limit.allowed) {
       return Response.json({ success: false, message: "Too many messages. Please try again later." }, { status: 429 });
     }
@@ -44,29 +44,34 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: true, data: { accepted: true } });
     }
 
-    if (!input.name || !isValidString(input.name, 2, 120)) {
+    const name = typeof input.name === "string" ? sanitizeText(input.name) : "";
+    const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+    const phone = typeof input.phone === "string" ? sanitizeText(input.phone).slice(0, 30) : "";
+    const subject = typeof input.subject === "string" ? sanitizeText(input.subject) : "";
+    const messageText = typeof input.message === "string" ? sanitizeText(input.message) : "";
+    if (!isValidString(name, 2, 120)) {
       return Response.json({ success: false, message: "Name is required." }, { status: 400 });
     }
 
-    if (!input.email || !validateEmail(input.email) || String(input.email).length > 254) {
+    if (!email || !validateEmail(email) || email.length > 254) {
       return Response.json({ success: false, message: "Valid email is required." }, { status: 400 });
     }
 
-    if (!input.subject || !isValidString(input.subject, 3, 200)) {
+    if (!isValidString(subject, 3, 200)) {
       return Response.json({ success: false, message: "Subject is required." }, { status: 400 });
     }
 
-    if (!input.message || !isValidString(input.message, 10, 4000)) {
+    if (!isValidString(messageText, 10, 4000)) {
       return Response.json({ success: false, message: "Message is required." }, { status: 400 });
     }
 
     await connectToDatabase();
     const message = await ContactMessage.create({
-      name: String(input.name).trim(),
-      email: String(input.email).trim().toLowerCase(),
-      phone: typeof input.phone === "string" ? input.phone.trim().slice(0, 30) : "",
-      subject: String(input.subject).trim(),
-      message: String(input.message).trim(),
+      name,
+      email,
+      phone,
+      subject,
+      message: messageText,
       status: "Unread",
     });
 
@@ -78,6 +83,7 @@ export async function POST(request: NextRequest) {
       html: "",
       text: `Name: ${message.name}\nEmail: ${message.email}\nPhone: ${message.phone || "Not provided"}\n\n${message.message}`,
     });
+    await sendContactAutoReplyEmail({ to: message.email, name: message.name, subject: message.subject });
     return Response.json({ success: true, data: message }, { status: 201 });
   } catch (error) {
     console.error("POST /api/contact failed:", error);
@@ -115,10 +121,10 @@ export async function PUT(request: NextRequest) {
     if (body.subject !== undefined && !isValidString(body.subject, 3, 200)) return Response.json({ success: false, message: "Enter a valid subject." }, { status: 400 });
     if (body.message !== undefined && !isValidString(body.message, 10, 4000)) return Response.json({ success: false, message: "Enter a valid message." }, { status: 400 });
     const updates = {
-      ...(typeof body.name === "string" ? { name: body.name.trim() } : {}),
+      ...(typeof body.name === "string" ? { name: sanitizeText(body.name) } : {}),
       ...(typeof body.email === "string" ? { email: body.email.trim().toLowerCase() } : {}),
-      ...(typeof body.subject === "string" ? { subject: body.subject.trim() } : {}),
-      ...(typeof body.message === "string" ? { message: body.message.trim() } : {}),
+      ...(typeof body.subject === "string" ? { subject: sanitizeText(body.subject) } : {}),
+      ...(typeof body.message === "string" ? { message: sanitizeText(body.message) } : {}),
       ...(typeof body.status === "string" ? { status: body.status } : {}),
     };
     const updated = await ContactMessage.findByIdAndUpdate(msgId, updates, { new: true, runValidators: true });

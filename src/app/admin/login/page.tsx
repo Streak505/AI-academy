@@ -7,6 +7,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [website, setWebsite] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function AdminLoginPage() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, website }),
       });
 
       const data = await response.json();
@@ -44,6 +45,10 @@ export default function AdminLoginPage() {
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Admin login</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <div className="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
+            <label htmlFor="admin-website">Leave this field empty</label>
+            <input id="admin-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
+          </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
             <input

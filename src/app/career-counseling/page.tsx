@@ -4,9 +4,18 @@ import { getPublicPrograms } from "@/lib/public-data";
 import { publicMetadata } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/auth";
 import { getAcademySettings } from "@/lib/academy-settings";
+import { FaqSection } from "@/components/Seo/StructuredData";
 
 export const revalidate = 300;
-export const metadata = publicMetadata("Career Counseling", "Career assessment and education guidance for students and families.", "/career-counseling");
+const counselingFaqs = [
+  { question: "Who can book career counseling?", answer: "Students planning their next steps and parents supporting their children can request a session." },
+  { question: "When are sessions available?", answer: "Sessions are scheduled Monday through Saturday between 5:00 PM and 8:00 PM Pakistan time, subject to slot availability." },
+  { question: "How is my session confirmed?", answer: "Submit your preferred date and time. The academy will contact you to confirm or arrange another available slot." },
+];
+export async function generateMetadata() {
+  const academy = await getAcademySettings();
+  return publicMetadata("Career Counseling", `Career assessment and education guidance${academy.locality ? ` in ${academy.locality}` : ""} for students and families.`, "/career-counseling");
+}
 export default async function CareerCounselingPage() {
   const [result, session, academy] = await Promise.all([
     getPublicPrograms("career"),
@@ -17,5 +26,5 @@ export default async function CareerCounselingPage() {
     getAcademySettings(),
   ]);
   const initialValues = session.success && session.user ? { name: session.user.name, email: session.user.email, phone: "" } : undefined;
-  return <><ProgramGroupContent result={result} title="Career Counseling" intro="Personalized guidance for students and parents to make informed education and career decisions." /><section className="bg-slate-50 px-4 pb-20"><div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2"><div><h2 className="text-3xl font-bold text-slate-900">Who can book?</h2><p className="mt-4 leading-7 text-slate-600">Students planning their next steps and parents supporting their children are welcome. A limited number of free career counseling sessions are offered through our community initiatives.</p>{academy.timing.days || academy.timing.from || academy.timing.to ? <p className="mt-4 text-sm text-slate-600">Available {[academy.timing.days, [academy.timing.from, academy.timing.to].filter(Boolean).join("–")].filter(Boolean).join(", ")} Pakistan time.</p> : null}{!session.success ? <p role="alert" className="mt-4 rounded-lg bg-rose-50 p-4 text-sm text-rose-800">Unable to load your signed-in details. You can still request a session by entering your contact information.</p> : null}</div><CounselingBookingForm initialValues={initialValues} /></div></section></>;
+  return <><ProgramGroupContent result={result} title="Career Counseling" intro={`Personalized guidance for students and parents${academy.locality ? ` in ${academy.locality}` : ""} to make informed education and career decisions.`} /><section className="bg-slate-50 px-4 pb-20"><div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2"><div><h2 className="text-3xl font-bold text-slate-900">Who can book?</h2><p className="mt-4 leading-7 text-slate-600">Students planning their next steps and parents supporting their children are welcome. A limited number of free career counseling sessions are offered through our community initiatives.</p>{academy.timing.days || academy.timing.from || academy.timing.to ? <p className="mt-4 text-sm text-slate-600">Available {[academy.timing.days, [academy.timing.from, academy.timing.to].filter(Boolean).join("–")].filter(Boolean).join(", ")} Pakistan time.</p> : null}{!session.success ? <p role="alert" className="mt-4 rounded-lg bg-rose-50 p-4 text-sm text-rose-800">Unable to load your signed-in details. You can still request a session by entering your contact information.</p> : null}</div><CounselingBookingForm initialValues={initialValues} /></div></section><FaqSection items={counselingFaqs} /></>;
 }

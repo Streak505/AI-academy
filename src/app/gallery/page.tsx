@@ -2,9 +2,13 @@ import { DataReadError } from "@/components/Academy/PublicCollections";
 import GalleryExplorer from "@/components/Academy/GalleryExplorer";
 import { getPublicGallery } from "@/lib/public-data";
 import { publicMetadata } from "@/lib/seo";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 export const revalidate = 300;
-export const metadata = publicMetadata("Gallery", "See events, workshops, achievements, and community initiatives at Shahzaib Royal Academy.", "/gallery");
+export async function generateMetadata() {
+  const academy = await getAcademySettings();
+  return publicMetadata("Gallery", `See events, workshops, achievements, and community initiatives at ${academy.name}${academy.locality ? ` in ${academy.locality}` : ""}.`, "/gallery");
+}
 
 export default async function GalleryPage() {
   const result = await getPublicGallery();

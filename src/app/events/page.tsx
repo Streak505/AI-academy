@@ -3,12 +3,18 @@ import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Event } from "@/models/Event";
 import { getImagePrefix, formatAcademyDate } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
+import { publicMetadata } from "@/lib/seo";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 export const dynamic = "force-dynamic";
 // DEPRECATED: not part of Shahzaib Royal Academy scope
-export const metadata = { title: "Events | Shahzaib Royal Academy" };
+export async function generateMetadata() {
+  const academy = await getAcademySettings();
+  return publicMetadata("Events", `Workshops, talks, and career sessions from ${academy.name}${academy.locality ? ` in ${academy.locality}` : ""}.`, "/events");
+}
 
 export default async function EventsPage() {
+  const academy = await getAcademySettings();
   let items: Array<{ _id: string; title: string; description: string; image?: string; date: Date; location: string; type?: string }> = [];
   let hasError = false;
   try {

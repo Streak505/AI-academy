@@ -3,10 +3,15 @@ import { connectToDatabase, logMongoError } from "@/lib/db";
 import { News } from "@/models/News";
 import { getImagePrefix, formatAcademyDate } from "@/utils/util";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
+import { publicMetadata } from "@/lib/seo";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 export const dynamic = "force-dynamic";
 // DEPRECATED: not part of Shahzaib Royal Academy scope
-export const metadata = { title: "News | Shahzaib Royal Academy" };
+export async function generateMetadata() {
+  const academy = await getAcademySettings();
+  return publicMetadata("News", `Academy announcements and updates from ${academy.name}${academy.locality ? ` in ${academy.locality}` : ""}.`, "/news");
+}
 
 export default async function NewsPage() {
   let items: Array<{ _id: string; title: string; excerpt?: string; image?: string; publishedAt?: Date }> = [];

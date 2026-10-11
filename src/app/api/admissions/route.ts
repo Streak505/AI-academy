@@ -3,17 +3,13 @@ import { head } from "@vercel/blob";
 import { connectDB } from "@/lib/db";
 import { nextCounterValue } from "@/lib/counters";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { sendEmail } from "@/lib/email";
+import { sendAdmissionReceivedEmail, sendEmail } from "@/lib/email";
 import { Admission } from "@/models/Admission";
 import { Program } from "@/models/Program";
 import { requireAdmin } from "@/lib/admin-auth";
-import { ADMISSION_CONCESSION_TYPES, ADMISSION_STATUSES, admissionSubmissionSchema } from "@/lib/validations";
+import { ADMISSION_CONCESSION_TYPES, ADMISSION_STATUSES, admissionSubmissionSchema, sanitizeText } from "@/lib/validations";
 import { getPrivateBlobToken } from "@/lib/blob";
 import { getAcademySettings } from "@/lib/academy-settings";
-
-function sanitizeText(value: string) {
-  return value.replace(/<[^>]*>/g, "").replace(/\p{Cc}/gu, "").trim();
-}
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
@@ -57,7 +53,7 @@ function omitDocumentUrls<T extends { documents?: Array<Record<string, unknown>>
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const limit = checkRateLimit(`admission:${ip}`, 5, 60 * 60 * 1000);
+    const limit = await checkRateLimit(`admission:${ip}`, 5, 60 * 60 * 1000);
     if (!limit.allowed) {
       return NextResponse.json({ success: false, message: "Too many applications. Please try again later." }, { status: 429 });
     }
@@ -135,19 +131,19 @@ export async function POST(request: NextRequest) {
       consentAt: new Date(),
     });
 
-    const escapedName = escapeHtml(student.fullName);
     const academySettings = await getAcademySettings();
     const emailTasks = [
-      sendEmail({
+      sendAdmissionReceivedEmail({
         to: guardian.email,
-        subject: `Admission application received — ${academySettings.name}`,
-        html: `<p>Hello ${escapeHtml(guardian.name)},</p><p>We received the admission application for ${escapedName}.</p><p>Reference: <strong>${applicationRef}</strong></p><p>Our admissions team will contact you about the next steps.</p>`,
-        text: `Hello ${guardian.name},\n\nWe received the admission application for ${student.fullName}.\nReference: ${applicationRef}\nOur admissions team will contact you about the next steps.`,
+        guardianName: guardian.name,
+        studentName: student.fullName,
+        reference: applicationRef,
+        program: program.title,
       }),
       sendEmail({
         to: process.env.ADMIN_EMAIL?.trim() || academySettings.email,
         subject: `New admission application — ${applicationRef}`,
-        html: `<p>A new admission application was submitted for ${escapedName}.</p><p>Program: ${escapeHtml(program.title)}</p><p>Reference: <strong>${applicationRef}</strong></p>`,
+        html: `<p>A new admission application was submitted for ${escapeHtml(student.fullName)}.</p><p>Program: ${escapeHtml(program.title)}</p><p>Reference: <strong>${applicationRef}</strong></p>`,
         text: `New admission application ${applicationRef}\nStudent: ${student.fullName}\nProgram: ${program.title}\nGuardian: ${guardian.name} (${guardian.phone}, ${guardian.email})`,
       }),
     ];

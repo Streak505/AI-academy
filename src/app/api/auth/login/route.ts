@@ -2,20 +2,33 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { setAuthCookies, signAccessToken, signRefreshToken, toSafeUser, verifyPassword, normalizeEmail } from "@/lib/auth";
 import { User } from "@/models/User";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clearRateLimit } from "@/lib/rate-limit";
+import { validateEmail } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const email = normalizeEmail(String(body?.email || ""));
-    const password = String(body?.password || "");
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    if (typeof input.website === "string" && input.website.trim()) return NextResponse.json({ success: true, data: { accepted: true } });
+    const email = typeof input.email === "string" ? normalizeEmail(input.email) : "";
+    const password = typeof input.password === "string" ? input.password : "";
 
-    if (!email || !password) {
+    if (!validateEmail(email) || email.length > 254 || !password || password.length > 256) {
       return NextResponse.json({ success: false, message: "Email and password are required." }, { status: 400 });
     }
 
-    const rateLimit = checkRateLimit(`login:${email}`, 8, 15 * 60 * 1000);
-    if (!rateLimit.allowed) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimit = await checkRateLimit(`login:${email}`, 8, 15 * 60 * 1000);
+    const ipRateLimit = await checkRateLimit(`login-ip:${ip}`, 30, 15 * 60 * 1000);
+    if (!rateLimit.allowed || !ipRateLimit.allowed) {
       return NextResponse.json({ success: false, message: "Too many login attempts. Please wait a moment and try again." }, { status: 429 });
     }
 
@@ -49,6 +62,10 @@ export async function POST(request: Request) {
     });
 
     setAuthCookies(response, accessToken, refreshToken);
+    await Promise.all([
+      clearRateLimit(`login:${email}`),
+      clearRateLimit(`login-ip:${ip}`),
+    ]);
     return response;
   } catch (error) {
     console.error("Login failed:", error);

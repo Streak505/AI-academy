@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { afterEach, describe, expect, it } from "vitest";
 import { getBlobStoreStatus, getPrivateBlobToken, getPublicBlobToken, storeIdFromToken } from "@/lib/blob";
 
 const blobVariables = [
@@ -27,35 +26,43 @@ function withBlobEnvironment(values: Partial<Record<(typeof blobVariables)[numbe
   }
 }
 
-test("storeIdFromToken parses read-write tokens without exposing the secret", () => {
-  assert.equal(storeIdFromToken("vercel_blob_rw_store_AbC-123_secret_with_parts"), "store_AbC-123");
-  assert.equal(storeIdFromToken("not-a-blob-token"), null);
-});
+describe("Blob token selection", () => {
+  const previous = new Map(blobVariables.map((name) => [name, process.env[name]]));
+  afterEach(() => {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
 
-test("Blob token resolvers bind private and public tokens to different stores", () => {
-  withBlobEnvironment({
-    BLOB_PRIVATE_STORE_ID: "store_private-123",
-    BLOB_PRIVATE_READ_WRITE_TOKEN: "vercel_blob_rw_private-123_private_secret",
-    BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_public-456_public_secret",
-    BLOB_PUBLIC_READ_WRITE_TOKEN: "vercel_blob_rw_PRIVATE-123_wrong_store_secret",
-  }, () => {
-    assert.equal(getPrivateBlobToken(), "vercel_blob_rw_private-123_private_secret");
-    assert.equal(getPublicBlobToken(), "vercel_blob_rw_public-456_public_secret");
-    assert.deepEqual(getBlobStoreStatus(), {
-      privateStoreId: "private-123",
-      publicStoreId: "public-456",
-      privateResolved: true,
-      publicResolved: true,
-      storesDifferent: true,
+  it("parses read-write tokens without exposing the secret", () => {
+    expect(storeIdFromToken("vercel_blob_rw_store_AbC-123_secret_with_parts")).toBe("store_AbC-123");
+    expect(storeIdFromToken("not-a-blob-token")).toBeNull();
+  });
+
+  it("binds private and public tokens to different stores", () => {
+    withBlobEnvironment({
+      BLOB_PRIVATE_STORE_ID: "store_private-123",
+      BLOB_PRIVATE_READ_WRITE_TOKEN: "vercel_blob_rw_private-123_private_secret",
+      BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_public-456_public_secret",
+      BLOB_PUBLIC_READ_WRITE_TOKEN: "vercel_blob_rw_PRIVATE-123_wrong_store_secret",
+    }, () => {
+      expect(getPrivateBlobToken()).toBe("vercel_blob_rw_private-123_private_secret");
+      expect(getPublicBlobToken()).toBe("vercel_blob_rw_public-456_public_secret");
+      expect(getBlobStoreStatus()).toEqual({
+        privateStoreId: "private-123",
+        publicStoreId: "public-456",
+        privateResolved: true,
+        publicResolved: true,
+        storesDifferent: true,
+      });
     });
   });
-});
 
-test("public token resolution fails if the private store cannot be identified", () => {
-  withBlobEnvironment({
-    BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_public-456_public_secret",
-  }, () => {
-    assert.throws(() => getPublicBlobToken(), /private store cannot be identified/);
-    assert.throws(() => getPrivateBlobToken(), /no valid private token is configured/);
+  it("fails if the private store cannot be identified", () => {
+    withBlobEnvironment({ BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_public-456_public_secret" }, () => {
+      expect(() => getPublicBlobToken()).toThrow(/private store cannot be identified/);
+      expect(() => getPrivateBlobToken()).toThrow(/no valid private token is configured/);
+    });
   });
 });

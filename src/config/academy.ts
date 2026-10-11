@@ -1,6 +1,7 @@
 export const academy = {
   name: "Shahzaib Royal Academy",
   shortName: "SRA",
+  locality: "TODO_REPLACE_CITY_AREA",
   tagline: "Academic excellence, career direction, and brighter futures.",
   vision: "To empower students through academic excellence, career development, leadership skills, and global learning opportunities.",
   mission: [

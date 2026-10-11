@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { Admission } from "@/models/Admission";
 import { AuditLog } from "@/models/AuditLog";
 import { ADMISSION_STATUSES } from "@/lib/validations";
+import { sendAdmissionApprovedEmail } from "@/lib/email";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -93,6 +94,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         notesChanged: previousNotes !== application.adminNotes,
       },
     });
+    if (application.status === "Approved" && previousStatus !== "Approved" && application.guardian?.email) {
+      await sendAdmissionApprovedEmail({
+        to: application.guardian.email,
+        guardianName: application.guardian.name,
+        studentName: application.applicant.studentName,
+        reference: application.applicationRef,
+      });
+    }
 
     return NextResponse.json({ success: true, data: { id: String(application._id), status: application.status, adminNotes: application.adminNotes } });
   } catch (error) {

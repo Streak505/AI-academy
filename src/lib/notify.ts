@@ -1,6 +1,7 @@
 import { getAcademySettings } from "@/lib/academy-settings";
 import { connectDB } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
+import { sendAbsenceAlertEmail, sendChallanGeneratedEmail, sendEmail, sendPaymentStatusEmail } from "@/lib/email";
+import { FeeChallan } from "@/models/FeeChallan";
 import { PortalNotification } from "@/models/PortalNotification";
 import { Student } from "@/models/Student";
 import { User } from "@/models/User";
@@ -31,7 +32,28 @@ export async function notify(input: { studentId: string; type: NotificationType;
     const message = templates[input.type](student.fullName, input.detail);
     try {
       const academy = await getAcademySettings();
-      await sendEmail({ to: parent.email, subject: `${message.subject} — ${academy.name}`, html: "", text: `Hello ${parent.name || "Parent"},\n\n${message.text}\n\n${academy.name}` });
+      if (input.type === "Absent") {
+        await sendAbsenceAlertEmail({ to: parent.email, parentName: parent.name || "Parent", studentName: student.fullName, date: input.detail });
+      } else if (input.type === "Challan") {
+        const challan = await FeeChallan.findOne({ challanNo: input.detail }).select("pendingAmount total").lean();
+        await sendChallanGeneratedEmail({
+          to: parent.email,
+          parentName: parent.name || "Parent",
+          studentName: student.fullName,
+          challanNo: input.detail,
+          amountPkr: challan?.pendingAmount ?? challan?.total ?? 0,
+        });
+      } else if (input.type === "PaymentVerified" || input.type === "PaymentRejected") {
+        await sendPaymentStatusEmail({
+          to: parent.email,
+          parentName: parent.name || "Parent",
+          studentName: student.fullName,
+          status: input.type === "PaymentVerified" ? "Verified" : "Rejected",
+          detail: input.detail,
+        });
+      } else {
+        await sendEmail({ to: parent.email, subject: `${message.subject} — ${academy.name}`, html: "", text: `Hello ${parent.name || "Parent"},\n\n${message.text}\n\n${academy.name}` });
+      }
     } catch (error) {
       console.error(`Unable to send ${input.type} notification:`, error);
     }
