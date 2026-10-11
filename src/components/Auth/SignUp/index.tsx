@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import SocialSignUp from "../SocialSignUp";
 import Logo from "@/components/Layout/Header/Logo";
 import { useState } from "react";
 import Loader from "@/components/Common/Loader";
@@ -37,15 +36,6 @@ const SignUp = () => {
     <div className="mx-auto w-full max-w-md">
       <div className="mb-8 text-center">
         <Logo />
-      </div>
-
-      <SocialSignUp />
-
-      <div className="relative my-8 flex items-center justify-center">
-        <span className="h-px w-full bg-slate-200" />
-        <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-          Or
-        </span>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">

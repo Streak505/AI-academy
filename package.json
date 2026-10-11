@@ -28,7 +28,6 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.2",
     "next": "^15.5.27",
-    "next-auth": "^4.24.15",
     "next-themes": "^0.3.0",
     "nodemailer": "^10.0.16",
     "pdf-lib": "^1.17.1",

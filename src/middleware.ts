@@ -10,7 +10,6 @@ const publicPaths = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/refresh",
-  "/api/auth/google",
   "/api/auth/verify-email",
   "/api/auth/resend-verification",
   "/api/auth/forgot-password",

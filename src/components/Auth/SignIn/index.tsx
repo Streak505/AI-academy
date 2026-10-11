@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import SocialSignIn from "../SocialSignIn";
 import Loader from "@/components/Common/Loader";
 import { academy } from "@/config/academy";
 
@@ -47,14 +46,6 @@ const Signin = () => {
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-500">Sign in to continue your learning journey.</p>
       </div>
-
-      <SocialSignIn />
-
-      <span className="relative my-8 block text-center before:content-[''] before:absolute before:h-px before:w-[40%] before:bg-slate-300 before:left-0 before:top-3 after:content-[''] after:absolute after:h-px after:w-[40%] after:bg-slate-300 after:top-3 after:right-0">
-        <span className="relative z-10 inline-block px-3 text-base text-slate-700 bg-white">
-          OR
-        </span>
-      </span>
 
       <form onSubmit={loginUser} className="text-left">
         <div className="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
