@@ -4,6 +4,7 @@ import { isValidObjectId, feeStructureSchema } from "@/lib/validations";
 import { FeeStructure } from "@/models/FeeStructure";
 import { Program } from "@/models/Program";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
       ...parsed.data,
       effectiveFrom: new Date(`${parsed.data.effectiveFrom}T00:00:00.000Z`),
     }, { new: true, runValidators: true });
+    if (updated) await recordAdminAudit(user, request, "FEE_STRUCTURE_UPDATED", "FeeStructure", id, { programId: parsed.data.program });
     return updated
       ? NextResponse.json({ success: true, data: updated })
       : NextResponse.json({ success: false, message: "Fee structure not found." }, { status: 404 });
@@ -40,7 +42,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Context) {
+export async function DELETE(request: NextRequest, { params }: Context) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ success: false, message: "Authentication is required." }, { status: 401 });
@@ -49,6 +51,7 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
     if (!isValidObjectId(id)) return NextResponse.json({ success: false, message: "Invalid fee structure id." }, { status: 400 });
     await connectDB();
     const deleted = await FeeStructure.findByIdAndDelete(id);
+    if (deleted) await recordAdminAudit(user, request, "FEE_STRUCTURE_DELETED", "FeeStructure", id, { programId: String(deleted.program) });
     return deleted
       ? NextResponse.json({ success: true, data: { id } })
       : NextResponse.json({ success: false, message: "Fee structure not found." }, { status: 404 });

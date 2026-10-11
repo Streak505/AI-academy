@@ -5,6 +5,7 @@ const CsrInitiativeSchema = new Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true },
     icon: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
     order: { type: Number, default: 0, min: 0 },
     isPublished: { type: Boolean, default: true, index: true },
   },

@@ -1,4 +1,4 @@
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 import { connectDB } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { PortalNotification } from "@/models/PortalNotification";
@@ -30,6 +30,7 @@ export async function notify(input: { studentId: string; type: NotificationType;
     }
     const message = templates[input.type](student.fullName, input.detail);
     try {
+      const academy = await getAcademySettings();
       await sendEmail({ to: parent.email, subject: `${message.subject} — ${academy.name}`, html: "", text: `Hello ${parent.name || "Parent"},\n\n${message.text}\n\n${academy.name}` });
     } catch (error) {
       console.error(`Unable to send ${input.type} notification:`, error);

@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Event } from "@/models/Event";
 import { isValidString, isValidObjectId } from "@/lib/validations";
-import { requireAdminResponse } from "@/lib/admin-auth";
+import { requireAdmin, requireAdminResponse } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +11,8 @@ export async function GET(request: NextRequest) {
     const searchParams = new URL(request.url).searchParams;
     const requestedId = searchParams.get("id");
     if (requestedId) {
-      const unauthorized = await requireAdminResponse();
-      if (unauthorized) return unauthorized;
+      const admin = await requireAdmin();
+      if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
       if (!isValidObjectId(requestedId)) return Response.json({ success: false, message: "A valid event id is required." }, { status: 400 });
       const event = await Event.findById(requestedId).lean();
       return event ? Response.json({ success: true, data: [event] }) : Response.json({ success: false, message: "Event not found." }, { status: 404 });
@@ -30,8 +31,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
 
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       capacity: body.capacity === undefined ? undefined : Number(body.capacity),
       isPublished: body.isPublished ?? true,
     });
+    await recordAdminAudit(admin, request, "EVENT_CREATED", "Event", String(event._id), { title: event.title });
 
     return Response.json({ success: true, data: event }, { status: 201 });
   } catch (error) {
@@ -71,8 +73,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
     const eventId = String(body?._id || body?.id || "");
@@ -91,6 +93,7 @@ export async function PUT(request: NextRequest) {
       { ...body, isPublished: body.isPublished ?? event.isPublished },
       { new: true }
     );
+    if (updated) await recordAdminAudit(admin, request, body.isPublished !== undefined && body.isPublished !== event.isPublished ? "EVENT_STATUS_UPDATED" : "EVENT_UPDATED", "Event", eventId, { title: updated.title });
 
     return Response.json({ success: true, data: updated });
   } catch (error) {
@@ -101,8 +104,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("id");
@@ -115,6 +118,7 @@ export async function DELETE(request: NextRequest) {
     if (!event) {
       return Response.json({ success: false, message: "Event not found." }, { status: 404 });
     }
+    await recordAdminAudit(admin, request, "EVENT_DELETED", "Event", eventId, { title: event.title });
 
     return Response.json({ success: true, message: "Event deleted successfully." });
   } catch (error) {

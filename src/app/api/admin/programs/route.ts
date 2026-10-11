@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { fail, ok, paginate, requireAuth } from "@/lib/api";
 import { PROGRAM_GROUPS, PROGRAM_MODES, Program } from "@/models/Program";
 import { isValidObjectId, isValidString } from "@/lib/validations";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 function validProgram(body: Record<string, unknown>) {
   return isValidString(body.title, 2, 160)
@@ -10,6 +11,7 @@ function validProgram(body: Record<string, unknown>) {
     && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(body.slug))
     && PROGRAM_GROUPS.includes(body.group as (typeof PROGRAM_GROUPS)[number])
     && isValidString(body.description, 5, 5000)
+    && (body.imageUrl === undefined || typeof body.imageUrl === "string")
     && Number.isSafeInteger(body.monthlyFee) && Number(body.monthlyFee) >= 0
     && Number.isSafeInteger(body.admissionFee) && Number(body.admissionFee) >= 0
     && (body.mode === undefined || PROGRAM_MODES.includes(body.mode as (typeof PROGRAM_MODES)[number]))
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest) {
       group: body.group,
       level: typeof body.level === "string" ? body.level : "",
       description: body.description,
+      imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : "",
       features: body.features ?? [],
       duration: typeof body.duration === "string" ? body.duration : "",
       monthlyFee: body.monthlyFee,
@@ -56,6 +59,7 @@ export async function POST(request: NextRequest) {
       isPublished: body.isPublished ?? true,
       order: body.order ?? 0,
     });
+    await recordAdminAudit(auth.user, request, "PROGRAM_CREATED", "Program", String(program._id), { title: program.title });
     return ok(program, 201);
   } catch (error) {
     console.error("POST /api/admin/programs failed:", error);
@@ -75,9 +79,11 @@ export async function PUT(request: NextRequest) {
     const updated = await Program.findByIdAndUpdate(id, {
       title: body.title, slug: body.slug, group: body.group, level: body.level ?? "",
       description: body.description, features: body.features ?? [], duration: body.duration ?? "",
+      imageUrl: body.imageUrl ?? "",
       monthlyFee: body.monthlyFee, admissionFee: body.admissionFee, mode: body.mode ?? "Physical",
       isPublished: body.isPublished ?? true, order: body.order ?? 0,
     }, { new: true, runValidators: true });
+    if (updated) await recordAdminAudit(auth.user, request, "PROGRAM_UPDATED", "Program", id, { title: updated.title });
     return updated ? ok(updated) : fail("Program not found.", 404);
   } catch (error) {
     console.error("PUT /api/admin/programs failed:", error);
@@ -93,6 +99,7 @@ export async function DELETE(request: NextRequest) {
     if (!isValidObjectId(id)) return fail("A valid program id is required.", 400);
     await connectDB();
     const deleted = await Program.findByIdAndDelete(id);
+    if (deleted) await recordAdminAudit(auth.user, request, "PROGRAM_DELETED", "Program", id, { title: deleted.title });
     return deleted ? ok({ message: "Program deleted." }) : fail("Program not found.", 404);
   } catch (error) {
     console.error("DELETE /api/admin/programs failed:", error);

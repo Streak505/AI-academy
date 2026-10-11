@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 type EmailPayload = {
   to: string;
@@ -14,6 +14,7 @@ function getProviderName() {
 
 export async function sendEmail({ to, subject, html: _html, text }: EmailPayload) {
   const providerName = getProviderName();
+  const academy = await getAcademySettings();
 
   if (providerName === "console" && process.env.NODE_ENV !== "production") {
     console.info(`[email:${providerName}] ${subject} -> ${to}`);
@@ -35,8 +36,9 @@ export async function sendEmail({ to, subject, html: _html, text }: EmailPayload
     secure: port === 465,
     ...(user && password ? { auth: { user, pass: password } } : {}),
   });
+  const from = process.env.EMAIL_FROM?.trim() || user || academy.email;
   const result = await transporter.sendMail({
-    from: process.env.EMAIL_FROM?.trim() || user || academy.email,
+    ...(from ? { from } : {}),
     to,
     subject,
     html: _html,
@@ -46,6 +48,7 @@ export async function sendEmail({ to, subject, html: _html, text }: EmailPayload
 }
 
 export async function sendVerificationEmail({ name, email, verificationUrl }: { name: string; email: string; verificationUrl: string }) {
+  const academy = await getAcademySettings();
   const subject = "Verify your email address";
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#0f172a;">
@@ -67,6 +70,7 @@ export async function sendVerificationEmail({ name, email, verificationUrl }: { 
 }
 
 export async function sendPasswordResetEmail({ name, email, resetUrl }: { name: string; email: string; resetUrl: string }) {
+  const academy = await getAcademySettings();
   const subject = "Reset your password";
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#0f172a;">
@@ -88,6 +92,7 @@ export async function sendPasswordResetEmail({ name, email, resetUrl }: { name: 
 }
 
 export async function sendWelcomeEmail({ name, email }: { name: string; email: string }) {
+  const academy = await getAcademySettings();
   return sendEmail({
     to: email,
     subject: `Welcome to ${academy.name}`,

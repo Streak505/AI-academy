@@ -4,7 +4,6 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { academy } from "@/config/academy";
 import { EmptyState, ErrorState } from "@/components/Common/DataState";
 import {
   ADMISSION_DOCUMENT_KINDS,
@@ -62,10 +61,14 @@ export default function AdmissionsPage({
   initialProgram = "",
   initialPrograms = [],
   programLoadError = false,
+  academyName,
+  whatsappNumber: configuredWhatsapp,
 }: {
   initialProgram?: string;
   initialPrograms?: AdmissionProgram[];
   programLoadError?: boolean;
+  academyName: string;
+  whatsappNumber: string;
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [programs] = useState(initialPrograms);
@@ -200,8 +203,8 @@ export default function AdmissionsPage({
     }
   }
 
-  const whatsappText = encodeURIComponent(`Hello ${academy.name}, my admission application reference is ${submittedReference}.`);
-  const whatsappNumber = academy.whatsappNumber.replace(/\D/g, "");
+  const whatsappText = encodeURIComponent(`Hello ${academyName}, my admission application reference is ${submittedReference}.`);
+  const whatsappNumber = configuredWhatsapp.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber.length >= 10 ? whatsappNumber : ""}?text=${whatsappText}`;
 
   if (submittedReference) {

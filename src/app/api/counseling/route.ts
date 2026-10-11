@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { academy } from "@/config/academy";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { connectDB } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { CounselingBooking } from "@/models/CounselingBooking";
+import { reserveCounselingSlot, releaseCounselingSlot } from "@/lib/counseling-slots";
 import { isValidEnum, isValidString, validateEmail } from "@/lib/validations";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 const bookingTypes = ["Career Assessment", "Degree Selection", "University Selection", "Parent Counseling", "Scholarship Guidance", "Study Abroad"] as const;
 const validSlots = Array.from({ length: 6 }, (_, index) => {
@@ -48,7 +49,11 @@ export async function POST(request: NextRequest) {
 
     const user = await getCurrentUser();
     await connectDB();
-    const booking = await CounselingBooking.create({
+    const reserved = await reserveCounselingSlot(date, input.preferredSlot);
+    if (!reserved) return NextResponse.json({ success: false, message: "That counseling slot is full. Please choose another time." }, { status: 409 });
+    let booking;
+    try {
+      booking = await CounselingBooking.create({
       requestedBy: user?.id || null,
       name: String(input.name).trim(),
       phone: String(input.phone).trim(),
@@ -57,10 +62,15 @@ export async function POST(request: NextRequest) {
       preferredDate: date,
       preferredSlot: input.preferredSlot,
       message: String(input.message || "").trim(),
-    });
+      });
+    } catch (error) {
+      await releaseCounselingSlot(date, input.preferredSlot);
+      throw error;
+    }
 
+    const academy = await getAcademySettings();
     const adminEmail = process.env.ADMIN_EMAIL?.trim() || academy.email;
-    await sendEmail({
+    if (adminEmail) await sendEmail({
       to: adminEmail,
       subject: `New counseling request — ${String(input.name).trim()}`,
       html: "",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DataReadError } from "@/components/Academy/PublicCollections";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 import { getPublicProgram, getPublicPrograms } from "@/lib/public-data";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -15,7 +15,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getPublicProgram(slug);
+  const [result, academy] = await Promise.all([getPublicProgram(slug), getAcademySettings()]);
   if (!result.success || !result.data) return { title: "Program details" };
   return {
     title: result.data.title,

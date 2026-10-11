@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import { getAccessibleStudentIds } from "@/lib/fee-access";
 import { resolvePortalStudentId } from "@/lib/portal-access";
 import { getCurrentUser } from "@/lib/auth";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 import { Attendance } from "@/models/Attendance";
 import { Assessment } from "@/models/Assessment";
 import { Assignment } from "@/models/Assignment";
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ success: false, message: "Authentication is required." }, { status: 401 });
+    const academy = await getAcademySettings();
     if (!["STUDENT", "PARENT", "ADMIN"].includes(user.role)) return NextResponse.json({ success: false, message: "You do not have access to portal records." }, { status: 403 });
     await connectDB();
     const params = request.nextUrl.searchParams;

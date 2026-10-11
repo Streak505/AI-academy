@@ -6,7 +6,8 @@ import { Enrollment } from "@/models/Enrollment";
 import { isValidRating, isValidString } from "@/lib/validations";
 import { getCurrentUser } from "@/lib/user-auth";
 import { isValidObjectId } from "@/lib/validations";
-import { requireAdminResponse } from "@/lib/admin-auth";
+import { requireAdmin, requireAdminResponse } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,8 +31,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     const body = await request.json();
     const reviewId = String(body?._id || body?.id || "");
     if (!isValidObjectId(reviewId)) return Response.json({ success: false, message: "A valid review id is required." }, { status: 400 });
@@ -46,7 +47,9 @@ export async function PUT(request: NextRequest) {
     }
     if (body.isPublished !== undefined) updates.isPublished = Boolean(body.isPublished);
     if (body.isFeatured !== undefined) updates.isFeatured = Boolean(body.isFeatured);
+    const previous = await Review.findById(reviewId).select("isPublished").lean();
     const review = await Review.findByIdAndUpdate(reviewId, updates, { new: true }).lean();
+    if (review && previous) await recordAdminAudit(admin, request, body.isPublished !== undefined && body.isPublished !== previous.isPublished ? "REVIEW_STATUS_UPDATED" : "REVIEW_UPDATED", "Review", reviewId, { isPublished: review.isPublished, isFeatured: review.isFeatured });
     return review ? Response.json({ success: true, data: review }) : Response.json({ success: false, message: "Review not found." }, { status: 404 });
   } catch (error) {
     logMongoError("PUT /api/reviews", error);
@@ -56,11 +59,12 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     const reviewId = new URL(request.url).searchParams.get("id");
     if (!reviewId || !isValidObjectId(reviewId)) return Response.json({ success: false, message: "A valid review id is required." }, { status: 400 });
     const review = await Review.findByIdAndDelete(reviewId);
+    if (review) await recordAdminAudit(admin, request, "REVIEW_DELETED", "Review", reviewId, { rating: review.rating });
     return review ? Response.json({ success: true, message: "Review deleted successfully." }) : Response.json({ success: false, message: "Review not found." }, { status: 404 });
   } catch (error) {
     logMongoError("DELETE /api/reviews", error);

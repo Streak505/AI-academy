@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Common/DataState";
+import { ClientPagination } from "@/components/Admin/ClientPagination";
 import { academy } from "@/config/academy";
 
 type Program = { id?: string; _id?: string; title: string; level?: string };
@@ -76,6 +77,12 @@ export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
   const [programId, setProgramId] = useState("");
   const [structureId, setStructureId] = useState("");
   const [structureForm, setStructureForm] = useState<FeeStructureForm>(emptyStructure);
+  const [challanPage, setChallanPage] = useState(1);
+  const [structurePage, setStructurePage] = useState(1);
+  const [pendingPaymentPage, setPendingPaymentPage] = useState(1);
+  const challanPageSize = 10;
+  const structurePageSize = 10;
+  const pendingPaymentPageSize = 10;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,6 +117,17 @@ export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
     () => challans.flatMap((challan) => challan.payments.filter((payment) => payment.status === "Pending").map((payment) => ({ challan, payment }))),
     [challans],
   );
+  const challanPages = Math.max(1, Math.ceil(challans.length / challanPageSize));
+  const currentChallanPage = Math.min(challanPage, challanPages);
+  const visibleChallans = challans.slice((currentChallanPage - 1) * challanPageSize, currentChallanPage * challanPageSize);
+  const structurePages = Math.max(1, Math.ceil(structures.length / structurePageSize));
+  const currentStructurePage = Math.min(structurePage, structurePages);
+  const visibleStructures = structures.slice((currentStructurePage - 1) * structurePageSize, currentStructurePage * structurePageSize);
+  const pendingPaymentPages = Math.max(1, Math.ceil(pendingPayments.length / pendingPaymentPageSize));
+  const currentPendingPaymentPage = Math.min(pendingPaymentPage, pendingPaymentPages);
+  const visiblePendingPayments = pendingPayments.slice((currentPendingPaymentPage - 1) * pendingPaymentPageSize, currentPendingPaymentPage * pendingPaymentPageSize);
+
+  useEffect(() => { setChallanPage(1); }, [month, statusFilter, programFilter, selectedStudentId]);
 
   async function generateChallans(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -333,21 +351,21 @@ export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
                   {structureId ? <button type="button" onClick={() => { setStructureId(""); setStructureForm(emptyStructure); }} className="rounded-lg border border-slate-300 px-3 py-2.5">Cancel</button> : null}
                 </div>
               </form>
-              {structures.length > 0 ? <div className="mt-5 divide-y divide-slate-100">
-                {structures.map((structure) => {
+              {structures.length > 0 ? <><div className="mt-5 divide-y divide-slate-100">
+                {visibleStructures.map((structure) => {
                   const program = typeof structure.program === "string" ? programs.find((item) => item.id === structure.program || item._id === structure.program)?.title : structure.program?.title;
                   return <div key={structure._id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                     <p><span className="font-semibold">{program || "Program"}</span> · {pkr(structure.monthlyFee)}/month · effective {new Date(structure.effectiveFrom).toLocaleDateString("en-PK", { timeZone: "Asia/Karachi" })}</p>
                     <div className="flex gap-3"><button type="button" onClick={() => editStructure(structure)} className="font-semibold text-teal-800 underline">Edit</button><button type="button" onClick={() => void deleteStructure(structure._id)} className="font-semibold text-rose-700 underline">Delete</button></div>
                   </div>;
                 })}
-              </div> : <p className="mt-4 text-sm text-slate-600">No fee structures yet. Add one before generating challans.</p>}
+              </div><ClientPagination page={currentStructurePage} pages={structurePages} onPageChange={setStructurePage} /></> : <div className="mt-4"><EmptyState title="No fee structures yet" message="Add a structure before generating challans." /></div>}
             </section>
 
             <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="text-xl font-bold">Payment verification queue</h2>
-              {pendingPayments.length === 0 ? <p className="mt-3 text-sm text-slate-600">No pending payments in this month’s challans.</p> : <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                {pendingPayments.map(({ challan, payment }) => <article key={payment._id} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              {pendingPayments.length === 0 ? <div className="mt-3"><EmptyState title="No pending payments" message="Payment submissions for this month will appear here." /></div> : <><div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {visiblePendingPayments.map(({ challan, payment }) => <article key={payment._id} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
                   <p className="font-bold">{challan.student.fullName} · {challan.challanNo}</p>
                   <p className="mt-1 text-sm">{payment.method} · {pkr(payment.amount)} · Ref: {payment.transactionId}</p>
                   {payment.senderNumber ? <p className="text-sm">Sender: {payment.senderNumber}</p> : null}
@@ -357,14 +375,14 @@ export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
                   </label>
                   <div className="mt-3 flex gap-2"><button disabled={busy} onClick={() => void reviewPayment(payment, "Verified")} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">Verify</button><button disabled={busy || !reviewNotes[payment._id]?.trim()} onClick={() => void reviewPayment(payment, "Rejected")} className="rounded-lg bg-rose-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Reject</button></div>
                 </article>)}
-              </div>}
+              </div><ClientPagination page={currentPendingPaymentPage} pages={pendingPaymentPages} onPageChange={setPendingPaymentPage} /></>}
             </section>
           </> : null}
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-bold">{isAdmin ? "Challans" : "Your challans"}</h2>
             {challans.length === 0 ? <div className="mt-4"><EmptyState title="No challans for this month" message={isAdmin ? "No fee records match the selected month and filters." : "Your challans will appear here once generated by the academy."} /></div> : <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              {challans.map((challan) => <article key={challan._id} className="rounded-xl border border-slate-200 p-4">
+              {visibleChallans.map((challan) => <article key={challan._id} className="rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div><p className="font-bold">{challan.student.fullName}</p><p className="text-sm text-slate-600">{challan.student.regNo} · {challan.student.classLevel || challan.student.program?.title} · {challan.periodMonth}</p><p className="mt-1 text-xs text-slate-500">{challan.challanNo} · Due {new Date(challan.dueDate).toLocaleDateString("en-PK", { timeZone: "Asia/Karachi" })}</p></div>
                   <span className={`rounded-full px-3 py-1 text-xs font-bold ${challan.status === "Paid" ? "bg-emerald-100 text-emerald-800" : challan.status === "Overdue" ? "bg-rose-100 text-rose-800" : challan.status === "Pending Verification" ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"}`}>{challan.status}</span>
@@ -390,6 +408,7 @@ export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
                 </details> : null}
               </article>)}
             </div>}
+            <ClientPagination page={currentChallanPage} pages={challanPages} onPageChange={setChallanPage} />
           </section>
         </>}
       </div>

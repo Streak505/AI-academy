@@ -7,30 +7,36 @@ import { ThemeProvider } from "next-themes";
 import ScrollToTop from "@/components/ScrollToTop";
 import type { Metadata } from "next";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 const font = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"], });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: { default: academy.name, template: `%s | ${academy.name}` },
-  description: academy.tagline,
-  authors: [{ name: siteName }],
-  creator: siteName,
-  publisher: siteName,
-  applicationName: siteName,
-  keywords: ["school academy", "academic coaching", "career counseling", "Pakistan"],
-  alternates: { canonical: absoluteUrl("/") },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  openGraph: { type: "website", locale: "en_PK", url: siteUrl, siteName, title: academy.name, description: academy.tagline },
-  twitter: { card: "summary_large_image", title: academy.name, description: academy.tagline },
-  icons: { icon: "/images/logo/logo-placeholder.svg" },
-};
+export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export async function generateMetadata(): Promise<Metadata> {
+  const academy = await getAcademySettings();
+  return {
+    metadataBase: new URL(siteUrl),
+    title: { default: academy.name, template: `%s | ${academy.name}` },
+    description: academy.tagline,
+    authors: [{ name: siteName }],
+    creator: siteName,
+    publisher: siteName,
+    applicationName: siteName,
+    keywords: ["school academy", "academic coaching", "career counseling", "Pakistan"],
+    alternates: { canonical: absoluteUrl("/") },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+    openGraph: { type: "website", locale: "en_PK", url: siteUrl, siteName, title: academy.name, description: academy.tagline },
+    twitter: { card: "summary_large_image", title: academy.name, description: academy.tagline },
+    icons: { icon: "/images/logo/logo-placeholder.svg" },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const academy = await getAcademySettings();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={font.className}>
@@ -40,9 +46,9 @@ export default function RootLayout({
           defaultTheme="light"
           disableTransitionOnChange
         >
-          <Header />
+          <Header academyName={academy.name} whatsappNumber={academy.whatsappNumber} />
           {children}
-          <Footer />
+          <Footer initialDetails={academy} />
           <ScrollToTop />
           <SpeedInsights />
         </ThemeProvider>

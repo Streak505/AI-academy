@@ -8,6 +8,7 @@ import { manualPaymentProvider } from "@/lib/payments/manual-provider";
 import { FeeChallan } from "@/models/FeeChallan";
 import { Payment } from "@/models/Payment";
 import { getCurrentUser } from "@/lib/auth";
+import { getPrivateBlobToken } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,6 @@ export async function POST(request: NextRequest) {
     if (user.role !== "STUDENT" && user.role !== "PARENT") {
       return NextResponse.json({ success: false, message: "Only students and parents can submit fee payments." }, { status: 403 });
     }
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
     const length = Number(request.headers.get("content-length") || 0);
     if (length > MAX_REQUEST_SIZE) return NextResponse.json({ success: false, message: "The upload request exceeds the 4.5 MB limit." }, { status: 413 });
     let form: FormData;
@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
     if (file instanceof File && (file.size < 1 || file.size > MAX_FILE_SIZE)) {
       return NextResponse.json({ success: false, message: "Payment screenshots must be no larger than 4 MB." }, { status: 413 });
     }
-    if (file instanceof File && !token) return NextResponse.json({ success: false, message: "Private payment proof storage is not configured." }, { status: 503 });
 
     await connectDB();
     const studentIds = await getAccessibleStudentIds(user);
@@ -93,9 +92,8 @@ export async function POST(request: NextRequest) {
     }
     reserved = { challanId: String(challan._id), amount: submission.amount, dueDate: challan.dueDate };
     if (file instanceof File && proofBytes) {
-      if (!token) throw new Error("Private payment proof storage is not configured.");
       const blob = await put(`fee-payments/${randomUUID()}/${proofFilename}`, Buffer.from(proofBytes), {
-        access: "private", addRandomSuffix: true, contentType: file.type, token,
+        access: "private", addRandomSuffix: true, contentType: file.type, token: getPrivateBlobToken(),
       });
       proofUrl = blob.url;
     }

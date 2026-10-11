@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { getImagePrefix } from "@/utils/util";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 import { getPublicInstructors } from "@/lib/public-data";
 import { FacultyCards, FacultyPreviewLink } from "@/components/Academy/FacultyCards";
 
@@ -28,14 +28,13 @@ const values = [
   "Opportunities for deserving students",
 ];
 
-const stats = [
-  { value: "5:00–8:00 PM", label: "Evening class hours" },
-  { value: "Mon–Sat", label: "Weekly class days" },
-  { value: "6", label: "Mission commitments" },
-];
-
 const AboutPage = async () => {
-  const faculty = await getPublicInstructors();
+  const [faculty, academy] = await Promise.all([getPublicInstructors(), getAcademySettings()]);
+  const stats = [
+    { value: [academy.timing.from, academy.timing.to].filter(Boolean).join("–"), label: "Evening class hours" },
+    { value: academy.timing.days, label: "Weekly class days" },
+    { value: "6", label: "Mission commitments" },
+  ].filter((item) => item.value);
   return (
     <main className="bg-slate-50 text-slate-800">
       <section className="bg-slateGray pt-28 pb-20 sm:pt-32 sm:pb-24">
@@ -81,7 +80,9 @@ const AboutPage = async () => {
               {academy.vision}
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Classes run {academy.timing.days}, {academy.timing.from} to {academy.timing.to}.
+              {academy.timing.days || academy.timing.from || academy.timing.to
+                ? `Classes run ${[academy.timing.days, [academy.timing.from, academy.timing.to].filter(Boolean).join(" to ")].filter(Boolean).join(", ")}.`
+                : null}
             </p>
             <h3 className="mt-6 text-lg font-semibold">Our mission</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-700">{academy.mission.map((item) => <li key={item}>{item}</li>)}</ul>

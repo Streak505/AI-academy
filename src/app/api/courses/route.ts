@@ -6,7 +6,8 @@ import { Course } from "@/models/Course";
 import { Category } from "@/models/Category";
 import { Instructor } from "@/models/Instructor";
 import { isValidObjectId, isValidPrice, isValidString } from "@/lib/validations";
-import { requireAdminResponse } from "@/lib/admin-auth";
+import { requireAdmin, requireAdminResponse } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,8 +16,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const requestedId = searchParams.get("id");
     if (requestedId) {
-      const unauthorized = await requireAdminResponse();
-      if (unauthorized) return unauthorized;
+      const admin = await requireAdmin();
+      if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
       if (!isValidObjectId(requestedId)) return Response.json({ success: false, message: "A valid course id is required." }, { status: 400 });
       const course = await Course.findById(requestedId).populate("category").populate("instructor").lean();
       return course ? Response.json({ success: true, data: [course] }) : Response.json({ success: false, message: "Course not found." }, { status: 404 });
@@ -58,8 +59,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
 
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
       price: Number(body.price),
       discountPrice: Number(body.discountPrice ?? 0),
     });
+    await recordAdminAudit(admin, request, "COURSE_CREATED", "Course", String(course._id), { title: course.title });
 
     return Response.json({ success: true, data: course }, { status: 201 });
   } catch (error) {
@@ -127,8 +129,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
     const courseId = String(body?._id || body?.id || "");
@@ -161,6 +163,7 @@ export async function PUT(request: NextRequest) {
       },
       { new: true }
     );
+    if (nextCourse) await recordAdminAudit(admin, request, body.isPublished !== undefined && body.isPublished !== course.isPublished ? "COURSE_STATUS_UPDATED" : "COURSE_UPDATED", "Course", courseId, { title: nextCourse.title });
 
     return Response.json({ success: true, data: nextCourse });
   } catch (error) {
@@ -171,8 +174,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("id");
@@ -186,6 +189,7 @@ export async function DELETE(request: NextRequest) {
     if (!course) {
       return Response.json({ success: false, message: "Course not found." }, { status: 404 });
     }
+    await recordAdminAudit(admin, request, "COURSE_DELETED", "Course", courseId, { title: course.title });
 
     return Response.json({ success: true, message: "Course deleted successfully." });
   } catch (error) {

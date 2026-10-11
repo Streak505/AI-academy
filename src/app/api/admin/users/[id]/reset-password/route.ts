@@ -20,8 +20,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     await connectDB();
     const user = await User.findById(id);
-    if (!user || !["STUDENT", "PARENT"].includes(user.role)) {
-      return NextResponse.json({ success: false, message: "Only student and parent passwords can be reset here." }, { status: 404 });
+    if (!user || !["ADMIN", "INSTRUCTOR", "STUDENT", "PARENT"].includes(user.role)) {
+      return NextResponse.json({ success: false, message: "A supported user account was not found." }, { status: 404 });
     }
 
     const temporaryPassword = generateSecureToken(12);

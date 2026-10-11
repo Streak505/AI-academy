@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { clearAdminSession } from "@/lib/admin-auth";
-import { USER_COOKIE_NAME } from "@/lib/user-auth";
+import { clearAuthCookies } from "@/lib/auth";
 
 export async function POST(request: Request) {
-  const response = NextResponse.redirect(new URL("/", request.url));
-  response.cookies.set(clearAdminSession());
-  response.cookies.set(USER_COOKIE_NAME, "", { expires: new Date(0), httpOnly: true, path: "/" });
+  const response = NextResponse.json({ success: true });
+  for (const cookie of clearAuthCookies()) response.cookies.set({ ...cookie, value: "" });
   return response;
 }

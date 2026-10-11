@@ -4,6 +4,7 @@ import { feeStructureSchema } from "@/lib/validations";
 import { FeeStructure } from "@/models/FeeStructure";
 import { Program } from "@/models/Program";
 import { getCurrentUser } from "@/lib/auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET() {
   try {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       effectiveFrom: new Date(`${parsed.data.effectiveFrom}T00:00:00.000Z`),
       createdBy: admin.id,
     });
+    await recordAdminAudit(admin, request, "FEE_STRUCTURE_CREATED", "FeeStructure", String(structure._id), { programId: parsed.data.program });
     return NextResponse.json({ success: true, data: structure }, { status: 201 });
   } catch (error) {
     console.error("POST /api/fees/structures failed:", error);

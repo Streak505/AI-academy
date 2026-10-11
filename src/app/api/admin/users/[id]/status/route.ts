@@ -3,13 +3,19 @@ import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { AuditLog } from "@/models/AuditLog";
 import { connectDB } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
+    if (!admin) return NextResponse.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     const { id } = await params;
-    const body = await request.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
+    }
     const status = String(body?.status ?? "");
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -25,6 +31,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!targetUser) {
       return NextResponse.json({ success: false, message: "User not found." }, { status: 404 });
     }
+    if (String(targetUser._id) === admin.id) {
+      return NextResponse.json({ success: false, message: "You cannot disable your own administrator account." }, { status: 409 });
+    }
 
     const previousStatus = targetUser.status;
     targetUser.status = status as "ACTIVE" | "SUSPENDED" | "DISABLED";
@@ -33,7 +42,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     await AuditLog.create({
       action: "ACCOUNT_STATUS_UPDATED",
-      actorEmail: (await requireAdmin()).email,
+      actorId: admin.id,
+      actorEmail: admin.email,
       targetResource: "User",
       targetId: targetUser._id,
       metadata: { previousStatus, newStatus: status },

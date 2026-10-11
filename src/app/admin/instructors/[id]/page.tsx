@@ -24,6 +24,7 @@ export default function EditInstructorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -52,10 +53,21 @@ export default function EditInstructorPage() {
     setError("");
 
     try {
+      let image = form.image;
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.set("file", imageFile);
+        const uploadResponse = await fetch("/api/admin/gallery/upload", { method: "POST", body: uploadData });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok || !uploadResult.success) {
+          throw new Error(uploadResult.message || "Unable to upload instructor image.");
+        }
+        image = String(uploadResult.data.url);
+      }
       const response = await fetch("/api/instructors", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, image }),
       });
 
       const data = await response.json();
@@ -125,6 +137,9 @@ export default function EditInstructorPage() {
         <div className="grid gap-5 md:grid-cols-2">
           <input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} placeholder="Experience" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
           <input value={form.image} onChange={(event) => setForm({ ...form, image: event.target.value })} placeholder="Image path" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+          <label className="text-sm font-medium text-slate-700">Upload instructor image
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] ?? null)} className="mt-1 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" />
+          </label>
         </div>
 
         <label className="flex items-center gap-3 text-sm font-medium text-slate-700">

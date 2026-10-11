@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { head } from "@vercel/blob";
-import { academy } from "@/config/academy";
 import { connectDB } from "@/lib/db";
 import { nextCounterValue } from "@/lib/counters";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -9,6 +8,8 @@ import { Admission } from "@/models/Admission";
 import { Program } from "@/models/Program";
 import { requireAdmin } from "@/lib/admin-auth";
 import { ADMISSION_CONCESSION_TYPES, ADMISSION_STATUSES, admissionSubmissionSchema } from "@/lib/validations";
+import { getPrivateBlobToken } from "@/lib/blob";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 function sanitizeText(value: string) {
   return value.replace(/<[^>]*>/g, "").replace(/\p{Cc}/gu, "").trim();
@@ -94,10 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { student, guardian, concessionRequest, documents } = cleanResult.data;
-    const privateToken = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!privateToken) {
-      return NextResponse.json({ success: false, message: "Private document storage is not configured." }, { status: 503 });
-    }
+    const privateToken = documents.length > 0 ? getPrivateBlobToken() : "";
     const storedDocuments = await Promise.all(documents.map(async (document) => {
       if (!/^admissions\/[a-f0-9-]{36}\/[^/]+$/i.test(document.uploadId)) {
         throw new Error("Invalid uploaded document identifier.");
@@ -138,15 +136,16 @@ export async function POST(request: NextRequest) {
     });
 
     const escapedName = escapeHtml(student.fullName);
+    const academySettings = await getAcademySettings();
     const emailTasks = [
       sendEmail({
         to: guardian.email,
-        subject: `Admission application received — ${academy.name}`,
+        subject: `Admission application received — ${academySettings.name}`,
         html: `<p>Hello ${escapeHtml(guardian.name)},</p><p>We received the admission application for ${escapedName}.</p><p>Reference: <strong>${applicationRef}</strong></p><p>Our admissions team will contact you about the next steps.</p>`,
         text: `Hello ${guardian.name},\n\nWe received the admission application for ${student.fullName}.\nReference: ${applicationRef}\nOur admissions team will contact you about the next steps.`,
       }),
       sendEmail({
-        to: process.env.ADMIN_EMAIL?.trim() || academy.email,
+        to: process.env.ADMIN_EMAIL?.trim() || academySettings.email,
         subject: `New admission application — ${applicationRef}`,
         html: `<p>A new admission application was submitted for ${escapedName}.</p><p>Program: ${escapeHtml(program.title)}</p><p>Reference: <strong>${applicationRef}</strong></p>`,
         text: `New admission application ${applicationRef}\nStudent: ${student.fullName}\nProgram: ${program.title}\nGuardian: ${guardian.name} (${guardian.phone}, ${guardian.email})`,

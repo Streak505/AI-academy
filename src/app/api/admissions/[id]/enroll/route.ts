@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-import { academy } from "@/config/academy";
 import { connectDB } from "@/lib/db";
 import { hashPassword, generateSecureToken } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -11,6 +10,7 @@ import { AuditLog } from "@/models/AuditLog";
 import { Student } from "@/models/Student";
 import { User } from "@/models/User";
 import { isValidObjectId } from "@/lib/validations";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -162,12 +162,13 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     const passwordNotice = result.parentPassword
       ? "Both accounts must change their temporary password after signing in."
       : "The student account must change its temporary password after signing in.";
+    const academy = await getAcademySettings();
     try {
       await sendEmail({
         to: result.parentEmail,
         subject: `Enrollment complete — ${academy.name}`,
-        html: `<p>${applicationGreeting(result.applicationRef)}</p><p>Student registration number: <strong>${result.regNo}</strong></p><p>Student login: ${result.studentEmail}<br>Temporary password: ${result.studentPassword}</p>${result.parentPassword ? `<p>Parent login: ${result.parentEmail}<br>Temporary password: ${result.parentPassword}</p>` : "<p>Your existing parent account has been linked.</p>"}<p>${passwordNotice}</p>`,
-        text: `${applicationGreeting(result.applicationRef)}\nStudent registration number: ${result.regNo}\nStudent login: ${result.studentEmail}\nTemporary password: ${result.studentPassword}${parentCredentials}\n${passwordNotice}`,
+        html: `<p>${applicationGreeting(result.applicationRef, academy.name)}</p><p>Student registration number: <strong>${result.regNo}</strong></p><p>Student login: ${result.studentEmail}<br>Temporary password: ${result.studentPassword}</p>${result.parentPassword ? `<p>Parent login: ${result.parentEmail}<br>Temporary password: ${result.parentPassword}</p>` : "<p>Your existing parent account has been linked.</p>"}<p>${passwordNotice}</p>`,
+        text: `${applicationGreeting(result.applicationRef, academy.name)}\nStudent registration number: ${result.regNo}\nStudent login: ${result.studentEmail}\nTemporary password: ${result.studentPassword}${parentCredentials}\n${passwordNotice}`,
       });
     } catch (emailError) {
       console.error(`Enrollment email failed for ${result.applicationRef}:`, emailError);
@@ -196,6 +197,6 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
   }
 }
 
-function applicationGreeting(reference: string) {
-  return reference ? `Your application ${reference} has been enrolled.` : `Your application has been enrolled at ${academy.name}.`;
+function applicationGreeting(reference: string, academyName: string) {
+  return reference ? `Your application ${reference} has been enrolled.` : `Your application has been enrolled at ${academyName}.`;
 }

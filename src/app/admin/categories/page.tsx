@@ -3,8 +3,12 @@ import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/db";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { Category } from "@/models/Category";
+import { EmptyState } from "@/components/Common/DataState";
+import { AdminPagination } from "@/components/Admin/AdminPagination";
 
-export default async function AdminCategoriesPage() {
+const pageSize = 20;
+
+export default async function AdminCategoriesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const isAuthenticated = await isAdminAuthenticated();
 
   if (!isAuthenticated) {
@@ -12,7 +16,13 @@ export default async function AdminCategoriesPage() {
   }
 
   await connectToDatabase();
-  const categories = await Category.find().sort({ name: 1 }).lean();
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const [categories, total] = await Promise.all([
+    Category.find().sort({ name: 1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
+    Category.countDocuments(),
+  ]);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <main className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -26,7 +36,7 @@ export default async function AdminCategoriesPage() {
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      {categories.length === 0 ? <EmptyState title="No categories found" message="Create a category to organize courses." /> : <div className="overflow-x-auto rounded-2xl border border-slate-200">
         <table className="min-w-full divide-y divide-slate-200 text-left">
           <thead className="bg-slate-50">
             <tr>
@@ -53,7 +63,8 @@ export default async function AdminCategoriesPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      <AdminPagination page={page} pages={pages} href="/admin/categories" />
     </main>
   );
 }

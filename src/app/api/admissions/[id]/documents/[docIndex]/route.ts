@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { connectDB } from "@/lib/db";
 import { Admission } from "@/models/Admission";
 import { isValidObjectId } from "@/lib/validations";
+import { getPrivateBlobToken } from "@/lib/blob";
 
 type RouteContext = { params: Promise<{ id: string; docIndex: string }> };
 
@@ -16,8 +17,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
     const admin = await requireAdmin();
     if (!admin) return NextResponse.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!token) return NextResponse.json({ success: false, message: "Private document storage is not configured." }, { status: 503 });
+    const token = getPrivateBlobToken();
 
     const { id, docIndex } = await params;
     if (!isValidObjectId(id) || !/^\d+$/.test(docIndex)) {

@@ -8,11 +8,13 @@ import { Program } from "@/models/Program";
 import { CsrInitiative } from "@/models/CsrInitiative";
 import { GalleryItem } from "@/models/GalleryItem";
 import { Student } from "@/models/Student";
+import { getBlobStoreStatus } from "@/lib/blob";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const dbInfo = getSafeDbInfo();
+  const blob = getBlobStoreStatus();
   const env = {
     hasMongoUri: Boolean(process.env.MONGODB_URI?.trim()),
     hasJwtSecret: Boolean(process.env.JWT_SECRET?.trim()),
@@ -52,6 +54,7 @@ export async function GET() {
       ok: true,
       time: new Date().toISOString(),
       db: { connected: true, ...dbInfo },
+      blob,
       env,
       counts: { courses, featuredCourses, instructors, reviews, news, events, programs, csrInitiatives, galleryItems, students },
     });
@@ -64,6 +67,7 @@ export async function GET() {
       ok: false,
       time: new Date().toISOString(),
       db: { connected: false, ...dbInfo, errorCode: code },
+      blob,
       env,
       counts: emptyCounts,
     }, { status: 503 });

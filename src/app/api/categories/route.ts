@@ -2,15 +2,16 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Category } from "@/models/Category";
 import { isValidString, isValidObjectId } from "@/lib/validations";
-import { requireAdminResponse } from "@/lib/admin-auth";
+import { requireAdmin, requireAdminResponse } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
     const requestedId = new URL(request.url).searchParams.get("id");
     if (requestedId) {
-      const unauthorized = await requireAdminResponse();
-      if (unauthorized) return unauthorized;
+      const admin = await requireAdmin();
+      if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
       if (!isValidObjectId(requestedId)) return Response.json({ success: false, message: "A valid category id is required." }, { status: 400 });
       const category = await Category.findById(requestedId).lean();
       return category ? Response.json({ success: true, data: [category] }) : Response.json({ success: false, message: "Category not found." }, { status: 404 });
@@ -25,8 +26,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
 
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       image: body.image ?? "",
       isActive: body.isActive ?? true,
     });
+    await recordAdminAudit(admin, request, "CATEGORY_CREATED", "Category", String(category._id), { name: category.name });
 
     return Response.json({ success: true, data: category }, { status: 201 });
   } catch (error) {
@@ -55,8 +57,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
     const categoryId = String(body?._id || body?.id || "");
@@ -75,6 +77,7 @@ export async function PUT(request: NextRequest) {
       { ...body, isActive: body.isActive ?? category.isActive },
       { new: true }
     );
+    if (updated) await recordAdminAudit(admin, request, body.isActive !== undefined && body.isActive !== category.isActive ? "CATEGORY_STATUS_UPDATED" : "CATEGORY_UPDATED", "Category", categoryId, { name: updated.name });
 
     return Response.json({ success: true, data: updated });
   } catch (error) {
@@ -85,8 +88,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("id");
@@ -99,6 +102,7 @@ export async function DELETE(request: NextRequest) {
     if (!category) {
       return Response.json({ success: false, message: "Category not found." }, { status: 404 });
     }
+    await recordAdminAudit(admin, request, "CATEGORY_DELETED", "Category", categoryId, { name: category.name });
 
     return Response.json({ success: true, message: "Category deleted successfully." });
   } catch (error) {

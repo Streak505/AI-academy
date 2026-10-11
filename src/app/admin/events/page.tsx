@@ -4,8 +4,12 @@ import { formatAcademyDate } from "@/utils/util";
 import { connectToDatabase } from "@/lib/db";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { Event } from "@/models/Event";
+import { EmptyState } from "@/components/Common/DataState";
+import { AdminPagination } from "@/components/Admin/AdminPagination";
 
-export default async function AdminEventsPage() {
+const pageSize = 20;
+
+export default async function AdminEventsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const isAuthenticated = await isAdminAuthenticated();
 
   if (!isAuthenticated) {
@@ -13,7 +17,13 @@ export default async function AdminEventsPage() {
   }
 
   await connectToDatabase();
-  const events = await Event.find().sort({ date: 1 }).lean();
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const [events, total] = await Promise.all([
+    Event.find().sort({ date: 1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
+    Event.countDocuments(),
+  ]);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <main className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -27,7 +37,7 @@ export default async function AdminEventsPage() {
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      {events.length === 0 ? <EmptyState title="No events found" message="Create an event to get started." /> : <div className="overflow-x-auto rounded-2xl border border-slate-200">
         <table className="min-w-full divide-y divide-slate-200 text-left">
           <thead className="bg-slate-50">
             <tr>
@@ -56,7 +66,8 @@ export default async function AdminEventsPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      <AdminPagination page={page} pages={pages} href="/admin/events" />
     </main>
   );
 }

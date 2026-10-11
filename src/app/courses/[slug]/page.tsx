@@ -8,7 +8,7 @@ import Image from "next/image";
 import EnrollButton from "@/components/Courses/EnrollButton";
 import type { Metadata } from "next";
 import { absoluteUrl, jsonLd, publicMetadata } from "@/lib/seo";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 // DEPRECATED: not part of Shahzaib Royal Academy scope
 
@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = await getCourse(slug);
   if (!data) return { title: "Course not found", robots: { index: false, follow: false } };
+  const academy = await getAcademySettings();
   const description = data.course.shortDescription || data.course.description.slice(0, 155);
   return {
     ...publicMetadata(data.course.title, description, `/courses/${data.course.slug}`),
@@ -48,6 +49,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
   }
 
   const { course, lessons, reviews } = data;
+  const academy = await getAcademySettings();
   const courseSchema = {
     "@context": "https://schema.org",
     "@type": "Course",

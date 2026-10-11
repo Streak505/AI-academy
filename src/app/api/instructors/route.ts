@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { connectToDatabase, logMongoError } from "@/lib/db";
 import { Instructor } from "@/models/Instructor";
 import { isValidString, validateEmail } from "@/lib/validations";
-import { requireAdminResponse } from "@/lib/admin-auth";
+import { requireAdmin, requireAdminResponse } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +11,8 @@ export async function GET(request: NextRequest) {
     const searchParams = new URL(request.url).searchParams;
     const requestedId = searchParams.get("id");
     if (requestedId) {
-      const unauthorized = await requireAdminResponse();
-      if (unauthorized) return unauthorized;
+      const admin = await requireAdmin();
+      if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
       if (!/^[0-9a-fA-F]{24}$/.test(requestedId)) return Response.json({ success: false, message: "A valid instructor id is required." }, { status: 400 });
       const instructor = await Instructor.findById(requestedId).lean();
       return instructor ? Response.json({ success: true, data: [instructor] }) : Response.json({ success: false, message: "Instructor not found." }, { status: 404 });
@@ -29,8 +30,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
 
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
       isActive: body.isActive ?? true,
       socialLinks: body.socialLinks ?? {},
     });
+    await recordAdminAudit(admin, request, "INSTRUCTOR_CREATED", "Instructor", String(instructor._id), { name: instructor.name });
 
     return Response.json({ success: true, data: instructor }, { status: 201 });
   } catch (error) {
@@ -61,8 +63,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const body = await request.json();
     const instructorId = String(body?._id || body?.id || "");
@@ -84,6 +86,7 @@ export async function PUT(request: NextRequest) {
       },
       { new: true }
     );
+    if (updatedInstructor) await recordAdminAudit(admin, request, body.isActive !== undefined && body.isActive !== instructor.isActive ? "INSTRUCTOR_STATUS_UPDATED" : "INSTRUCTOR_UPDATED", "Instructor", instructorId, { name: updatedInstructor.name });
 
     return Response.json({ success: true, data: updatedInstructor });
   } catch (error) {
@@ -94,8 +97,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const instructorId = searchParams.get("id");
@@ -108,6 +111,7 @@ export async function DELETE(request: NextRequest) {
     if (!instructor) {
       return Response.json({ success: false, message: "Instructor not found." }, { status: 404 });
     }
+    await recordAdminAudit(admin, request, "INSTRUCTOR_DELETED", "Instructor", instructorId, { name: instructor.name });
 
     return Response.json({ success: true, message: "Instructor deleted successfully." });
   } catch (error) {

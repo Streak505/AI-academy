@@ -8,6 +8,7 @@ import { Assignment } from "@/models/Assignment";
 import { AssignmentSubmission } from "@/models/AssignmentSubmission";
 import { Student } from "@/models/Student";
 import { isValidObjectId } from "@/lib/validations";
+import { getPrivateBlobToken } from "@/lib/blob";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
@@ -27,8 +28,7 @@ export async function POST(request: NextRequest, { params }: Context) {
     if (user.role !== "STUDENT") return NextResponse.json({ success: false, message: "Only students can submit assignment work." }, { status: 403 });
     const { id } = await params;
     if (!isValidObjectId(id)) return NextResponse.json({ success: false, message: "Invalid assignment." }, { status: 400 });
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!token) return NextResponse.json({ success: false, message: "Private assignment storage is not configured." }, { status: 503 });
+    const token = getPrivateBlobToken();
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File) || file.size < 1 || file.size > MAX_FILE_SIZE) return NextResponse.json({ success: false, message: "Choose a file smaller than 4 MB." }, { status: 413 });
@@ -64,8 +64,7 @@ export async function GET(request: NextRequest, { params }: Context) {
     if (!["STUDENT", "PARENT", "ADMIN"].includes(user.role)) return NextResponse.json({ success: false, message: "Access denied." }, { status: 403 });
     const { id } = await params;
     if (!isValidObjectId(id)) return NextResponse.json({ success: false, message: "Invalid assignment." }, { status: 400 });
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!token) return NextResponse.json({ success: false, message: "Private assignment storage is not configured." }, { status: 503 });
+    const token = getPrivateBlobToken();
     await connectDB();
     const ids = await getAccessibleStudentIds(user);
     const filter: Record<string, unknown> = { assignment: id };

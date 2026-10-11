@@ -5,6 +5,7 @@ import { Payment } from "@/models/Payment";
 import { isValidObjectId } from "@/lib/validations";
 import { getCurrentUser } from "@/lib/auth";
 import { notify } from "@/lib/notify";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -38,6 +39,11 @@ export async function PATCH(request: NextRequest, { params }: Context) {
       { new: true }
     );
     if (!payment) return NextResponse.json({ success: false, message: "This payment was already reviewed or no longer exists." }, { status: 409 });
+    await recordAdminAudit(admin, request, "FEE_PAYMENT_REVIEWED", "Payment", String(payment._id), {
+      status: payment.status,
+      amount: payment.amount,
+      note,
+    });
 
     const [challan, totals, pendingTotals] = await Promise.all([
       FeeChallan.findById(payment.challan),

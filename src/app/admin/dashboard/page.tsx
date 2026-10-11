@@ -8,6 +8,7 @@ import { Admission } from "@/models/Admission";
 import { ContactMessage } from "@/models/ContactMessage";
 import { Review } from "@/models/Review";
 import { Icon } from "@iconify/react";
+import Link from "next/link";
 
 async function getDashboardData() {
   await connectToDatabase();
@@ -76,15 +77,15 @@ export default async function AdminDashboardPage() {
           </form>
         </header>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {cards.map((card) => (
-            <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Link href={card.label === "Pending Applications" ? "/admin/applications" : "#"} key={card.label} className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${card.label === "Pending Applications" ? "transition hover:border-orange-300 hover:shadow-md" : "pointer-events-none"}`}>
               <div className="flex items-start justify-between gap-3">
                 <p className="text-sm text-slate-500">{card.label}</p>
                 <span className={`rounded-xl p-2 ${card.tone}`}><Icon icon={card.icon} className="text-xl" aria-hidden="true" /></span>
               </div>
               <p className="mt-5 text-3xl font-bold text-slate-900">{card.value}</p>
-            </div>
+            </Link>
           ))}
         </div>
 

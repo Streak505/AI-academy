@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Payment } from "@/models/Payment";
 import { isValidObjectId } from "@/lib/validations";
 import { getCurrentUser } from "@/lib/auth";
+import { getPrivateBlobToken } from "@/lib/blob";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -14,8 +15,7 @@ export async function GET(_request: NextRequest, { params }: Context) {
     if (user.role !== "ADMIN") return NextResponse.json({ success: false, message: "Administrator access is required." }, { status: 403 });
     const { id } = await params;
     if (!isValidObjectId(id)) return NextResponse.json({ success: false, message: "Invalid payment id." }, { status: 400 });
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!token) return NextResponse.json({ success: false, message: "Private payment proof storage is not configured." }, { status: 503 });
+    const token = getPrivateBlobToken();
     await connectDB();
     const payment = await Payment.findById(id).select("proofUrl proofMimeType proofFilename").lean();
     if (!payment?.proofUrl) return NextResponse.json({ success: false, message: "Payment proof not found." }, { status: 404 });

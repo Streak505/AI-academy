@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/models/User";
 import { connectDB } from "@/lib/db";
-import { setAuthCookies, signAccessToken, signRefreshToken, toSafeUser, verifyRefreshToken } from "@/lib/auth";
+import { REFRESH_COOKIE_NAME, setAuthCookies, signAccessToken, signRefreshToken, toSafeUser, verifyRefreshToken } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const refreshToken = String(body?.refreshToken ?? "");
+    let body: { refreshToken?: unknown } = {};
+    if (request.headers.get("content-type")?.includes("application/json")) {
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json({ success: false, message: "Invalid request body." }, { status: 400 });
+      }
+    }
+    const refreshToken = String(body?.refreshToken ?? request.cookies.get(REFRESH_COOKIE_NAME)?.value ?? "");
 
     if (!refreshToken) {
       return NextResponse.json({ success: false, message: "Refresh token is required." }, { status: 401 });

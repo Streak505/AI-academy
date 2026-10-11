@@ -7,8 +7,12 @@ import { Course } from "@/models/Course";
 
 // DEPRECATED: not part of Shahzaib Royal Academy scope
 import { Instructor } from "@/models/Instructor";
+import { EmptyState } from "@/components/Common/DataState";
+import { AdminPagination } from "@/components/Admin/AdminPagination";
 
-export default async function AdminCoursesPage() {
+const pageSize = 20;
+
+export default async function AdminCoursesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const isAuthenticated = await isAdminAuthenticated();
 
   if (!isAuthenticated) {
@@ -17,11 +21,15 @@ export default async function AdminCoursesPage() {
 
   await connectToDatabase();
 
-  const [courses, categories, instructors] = await Promise.all([
-    Course.find().sort({ createdAt: -1 }).lean(),
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const [courses, total, categories, instructors] = await Promise.all([
+    Course.find().sort({ createdAt: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
+    Course.countDocuments(),
     Category.find().lean(),
     Instructor.find().lean(),
   ]);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   const categoryMap = new Map(categories.map((category: any) => [String(category._id), category.name]));
   const instructorMap = new Map(instructors.map((instructor: any) => [String(instructor._id), instructor.name]));
@@ -38,7 +46,7 @@ export default async function AdminCoursesPage() {
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      {courses.length === 0 ? <EmptyState title="No courses found" message="Create a course to get started." /> : <div className="overflow-x-auto rounded-2xl border border-slate-200">
         <table className="min-w-full divide-y divide-slate-200 text-left">
           <thead className="bg-slate-50">
             <tr>
@@ -49,9 +57,7 @@ export default async function AdminCoursesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
-            {courses.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-12 text-center text-slate-600">No courses have been created yet.</td></tr>
-            ) : courses.map((course: any) => (
+            {courses.map((course: any) => (
               <tr key={String(course._id)} className="hover:bg-slate-50 cursor-pointer">
                 <td className="px-4 py-4 font-medium text-slate-900">
                   <Link href={`/admin/courses/${course._id}`} className="hover:text-violet-600 transition">
@@ -69,7 +75,8 @@ export default async function AdminCoursesPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      <AdminPagination page={page} pages={pages} href="/admin/courses" />
     </main>
   );
 }

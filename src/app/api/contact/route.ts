@@ -5,7 +5,9 @@ import { validateEmail, isValidString, isValidObjectId } from "@/lib/validations
 import { requireAdminResponse } from "@/lib/admin-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
-import { academy } from "@/config/academy";
+import { requireAdmin } from "@/lib/admin-auth";
+import { recordAdminAudit } from "@/lib/admin-audit";
+import { getAcademySettings } from "@/lib/academy-settings";
 
 export async function GET() {
   try {
@@ -68,8 +70,10 @@ export async function POST(request: NextRequest) {
       status: "Unread",
     });
 
-    await sendEmail({
-      to: process.env.ADMIN_EMAIL?.trim() || academy.email,
+    const academy = await getAcademySettings();
+    const recipient = process.env.ADMIN_EMAIL?.trim() || academy.email;
+    if (recipient) await sendEmail({
+      to: recipient,
       subject: `New website message: ${message.subject}`,
       html: "",
       text: `Name: ${message.name}\nEmail: ${message.email}\nPhone: ${message.phone || "Not provided"}\n\n${message.message}`,
@@ -83,10 +87,15 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
-    const body = await request.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ success: false, message: "Invalid request body." }, { status: 400 });
+    }
     const msgId = String(body?._id || body?.id || "");
 
     if (!msgId || !isValidObjectId(msgId)) {
@@ -98,11 +107,24 @@ export async function PUT(request: NextRequest) {
       return Response.json({ success: false, message: "Message not found." }, { status: 404 });
     }
 
-    const updated = await ContactMessage.findByIdAndUpdate(
-      msgId,
-      { ...body, status: body.status ?? msg.status },
-      { new: true }
-    );
+    if (body.status !== undefined && !["Unread", "Read", "Resolved"].includes(String(body.status))) {
+      return Response.json({ success: false, message: "Choose a valid inbox status." }, { status: 400 });
+    }
+    if (body.name !== undefined && !isValidString(body.name, 2, 120)) return Response.json({ success: false, message: "Enter a valid sender name." }, { status: 400 });
+    if (body.email !== undefined && (!validateEmail(body.email) || String(body.email).length > 254)) return Response.json({ success: false, message: "Enter a valid email." }, { status: 400 });
+    if (body.subject !== undefined && !isValidString(body.subject, 3, 200)) return Response.json({ success: false, message: "Enter a valid subject." }, { status: 400 });
+    if (body.message !== undefined && !isValidString(body.message, 10, 4000)) return Response.json({ success: false, message: "Enter a valid message." }, { status: 400 });
+    const updates = {
+      ...(typeof body.name === "string" ? { name: body.name.trim() } : {}),
+      ...(typeof body.email === "string" ? { email: body.email.trim().toLowerCase() } : {}),
+      ...(typeof body.subject === "string" ? { subject: body.subject.trim() } : {}),
+      ...(typeof body.message === "string" ? { message: body.message.trim() } : {}),
+      ...(typeof body.status === "string" ? { status: body.status } : {}),
+    };
+    const updated = await ContactMessage.findByIdAndUpdate(msgId, updates, { new: true, runValidators: true });
+    if (updated) {
+      await recordAdminAudit(admin, request, msg.status !== updated.status ? "CONTACT_MESSAGE_STATUS_UPDATED" : "CONTACT_MESSAGE_UPDATED", "ContactMessage", msgId, { previousStatus: msg.status, newStatus: updated.status });
+    }
 
     return Response.json({ success: true, data: updated });
   } catch (error) {
@@ -113,8 +135,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const unauthorized = await requireAdminResponse();
-    if (unauthorized) return unauthorized;
+    const admin = await requireAdmin();
+    if (!admin) return Response.json({ success: false, message: "Administrator authentication is required." }, { status: 401 });
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const msgId = searchParams.get("id");
@@ -128,6 +150,7 @@ export async function DELETE(request: NextRequest) {
       return Response.json({ success: false, message: "Message not found." }, { status: 404 });
     }
 
+    await recordAdminAudit(admin, request, "CONTACT_MESSAGE_DELETED", "ContactMessage", msgId, { subject: msg.subject });
     return Response.json({ success: true, message: "Message deleted successfully." });
   } catch (error) {
     console.error("DELETE /api/contact failed:", error);

@@ -10,6 +10,7 @@ const ProgramSchema = new Schema(
     group: { type: String, enum: PROGRAM_GROUPS, required: true, index: true },
     level: { type: String, default: "" },
     description: { type: String, required: true, trim: true },
+    imageUrl: { type: String, default: "" },
     features: [{ type: String, trim: true }],
     duration: { type: String, default: "" },
     monthlyFee: { type: Number, required: true, min: 0, validate: Number.isInteger },

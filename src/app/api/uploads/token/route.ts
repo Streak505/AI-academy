@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ADMISSION_DOCUMENT_KINDS, ADMISSION_MAX_DOCUMENT_SIZE } from "@/lib/validations";
+import { getPrivateBlobToken } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
@@ -27,10 +28,7 @@ function hasValidSignature(bytes: Uint8Array, mimeType: AllowedMimeType) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim();
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Private document uploads are not configured." }, { status: 503 });
-    }
+    const token = getPrivateBlobToken();
     const requestSize = Number(request.headers.get("content-length") || 0);
     if (requestSize > MAX_REQUEST_SIZE) {
       return NextResponse.json({ success: false, message: "The upload request exceeds the 4.5 MB server limit." }, { status: 413 });

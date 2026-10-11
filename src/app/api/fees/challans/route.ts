@@ -9,6 +9,7 @@ import { FeeStructure } from "@/models/FeeStructure";
 import { Student } from "@/models/Student";
 import { getCurrentUser } from "@/lib/auth";
 import { notify } from "@/lib/notify";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -134,6 +135,12 @@ export async function POST(request: NextRequest) {
           total: Math.max(0, subtotal - discount + lateFee), dueDate, generatedBy: admin.id,
         });
         results.push({ challanNo: challan.challanNo, student: String(student._id), status: "created" });
+        await recordAdminAudit(admin, request, "FEE_CHALLAN_CREATED", "FeeChallan", String(challan._id), {
+          challanNo: challan.challanNo,
+          studentId: String(student._id),
+          periodMonth,
+          total: challan.total,
+        });
       } catch (error) {
         if (error && typeof error === "object" && "code" in error && error.code === 11000) {
           const duplicate = await FeeChallan.findOne({ student: student._id, periodMonth }).select("challanNo").lean();

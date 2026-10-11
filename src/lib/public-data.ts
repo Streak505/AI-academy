@@ -18,7 +18,7 @@ export type PublicProgram = {
   mode: "Physical" | "Online" | "Hybrid";
 };
 
-export type PublicInitiative = { id: string; title: string; description: string };
+export type PublicInitiative = { id: string; title: string; description: string; imageUrl: string };
 export type PublicGalleryItem = {
   id: string;
   title: string;
@@ -96,7 +96,7 @@ export async function getPublicInitiatives(): Promise<PublicResult<PublicInitiat
   try {
     await connectDB();
     const items = await CsrInitiative.find({ isPublished: true }).sort({ order: 1, title: 1 }).lean();
-    return { success: true, data: items.map((item) => ({ id: String(item._id), title: item.title, description: item.description })) };
+    return { success: true, data: items.map((item) => ({ id: String(item._id), title: item.title, description: item.description, imageUrl: item.imageUrl ?? "" })) };
   } catch (error) {
     console.error("Unable to read published CSR initiatives:", error);
     return { success: false };

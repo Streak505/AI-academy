@@ -39,7 +39,7 @@ const roleLinks = {
   ],
 } as const;
 
-const Header: React.FC = () => {
+const Header: React.FC<{ academyName: string; whatsappNumber: string }> = ({ academyName, whatsappNumber }) => {
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [sticky, setSticky] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
@@ -112,7 +112,7 @@ const Header: React.FC = () => {
     <>
     <header className={`fixed top-0 z-50 w-full border-b transition-all duration-300 ${sticky ? "border-slate-200 bg-white/95 py-3 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-950/85" : "border-transparent bg-white/85 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75"}`}>
       <div className="mx-auto flex w-full max-w-[1440px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-          <Logo />
+          <Logo name={academyName} />
           <nav className="hidden flex-1 items-center justify-center gap-0.5 2xl:flex">
             {headerData.map((item, index) => (
               <HeaderLink key={index} item={item} />
@@ -150,7 +150,7 @@ const Header: React.FC = () => {
             className={`fixed right-0 top-0 z-50 h-full w-[min(88vw,380px)] transform bg-white p-6 shadow-2xl transition-transform duration-300 2xl:hidden dark:bg-slate-950 ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="flex items-center justify-between">
-              <Logo /><button onClick={() => setNavbarOpen(false)} className="rounded-lg p-2 text-xl hover:bg-slate-100" aria-label="Close menu"><Icon icon="solar:close-circle-linear" className="text-2xl" aria-hidden="true" /></button>
+              <Logo name={academyName} /><button onClick={() => setNavbarOpen(false)} className="rounded-lg p-2 text-xl hover:bg-slate-100" aria-label="Close menu"><Icon icon="solar:close-circle-linear" className="text-2xl" aria-hidden="true" /></button>
           </div>
           <nav className="mt-8 flex flex-col items-start">
             {headerData.map((item, index) => (
@@ -162,7 +162,7 @@ const Header: React.FC = () => {
           </nav>
       </div>
     </header>
-    <WhatsAppButton />
+    <WhatsAppButton initialNumber={whatsappNumber} academyName={academyName} />
     </>
   );
 };

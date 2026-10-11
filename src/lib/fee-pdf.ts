@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import QRCode from "qrcode";
-import { academy } from "@/config/academy";
+import { getAcademySettings } from "@/lib/academy-settings";
 import { formatPkr } from "@/lib/fees";
 
 export type ChallanPdfData = {
@@ -20,6 +20,7 @@ const pageWidth = 595.28;
 const left = 34;
 
 export async function createChallanPdf(data: ChallanPdfData) {
+  const academy = await getAcademySettings();
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([pageWidth, 841.89]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
@@ -29,11 +30,11 @@ export async function createChallanPdf(data: ChallanPdfData) {
   const dueDate = new Intl.DateTimeFormat("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium" }).format(new Date(data.dueDate));
   const studentClass = data.student.classLevel || data.student.program?.title || "—";
   const paymentLines = [
-    `EasyPaisa: ${academy.payments.easyPaisa.accountTitle} / ${academy.payments.easyPaisa.accountNumber}`,
-    `JazzCash: ${academy.payments.jazzCash.accountTitle} / ${academy.payments.jazzCash.accountNumber}`,
-    `Bank: ${academy.payments.bankTransfer.bankName} / ${academy.payments.bankTransfer.accountTitle}`,
-    `IBAN: ${academy.payments.bankTransfer.iban}`,
-  ];
+    [academy.payments.easyPaisa.accountTitle, academy.payments.easyPaisa.accountNumber].filter(Boolean).join(" / "),
+    [academy.payments.jazzCash.accountTitle, academy.payments.jazzCash.accountNumber].filter(Boolean).join(" / "),
+    [academy.payments.bankTransfer.bankName, academy.payments.bankTransfer.accountTitle].filter(Boolean).join(" / "),
+    academy.payments.bankTransfer.iban,
+  ].filter(Boolean);
   for (let copy = 0; copy < 3; copy++) {
     const top = 823 - copy * 270;
     const text = (value: string, x: number, y: number, size = 8, isBold = false) => {

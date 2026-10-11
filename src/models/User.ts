@@ -28,6 +28,9 @@ const UserSchema = new Schema(
     lastLoginAt: { type: Date, default: null },
     lastPasswordChangeAt: { type: Date, default: null },
     lastSeenAt: { type: Date, default: null },
+    adminLoginFailures: { type: Number, default: 0, select: false },
+    adminLoginWindowStartedAt: { type: Date, default: null, select: false },
+    adminLockedUntil: { type: Date, default: null, select: false },
   },
   { timestamps: true }
 );
