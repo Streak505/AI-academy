@@ -20,6 +20,7 @@ const UserSchema = new Schema(
     providerAccountId: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
     instructorProfile: { type: Schema.Types.ObjectId, ref: "Instructor" },
+    assignedPrograms: [{ type: Schema.Types.ObjectId, ref: "Program" }],
     verificationTokenHash: { type: String, default: "", select: false },
     verificationTokenExpiresAt: { type: Date, default: null },
     resetTokenHash: { type: String, default: "", select: false },

@@ -7,6 +7,7 @@ const NoticeSchema = new Schema(
     audience: { type: String, enum: ["all", "students", "parents", "program"], default: "all", index: true },
     program: { type: Schema.Types.ObjectId, ref: "Program", default: null },
     pinned: { type: Boolean, default: false, index: true },
+    readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     publishedAt: { type: Date, default: Date.now, index: true },
     expiresAt: { type: Date, default: null },
   },

@@ -8,6 +8,7 @@ import { FeeChallan } from "@/models/FeeChallan";
 import { FeeStructure } from "@/models/FeeStructure";
 import { Student } from "@/models/Student";
 import { getCurrentUser } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,8 +34,16 @@ export async function GET(request: NextRequest) {
     if (studentIds && studentIds.length === 0) {
       return NextResponse.json({ success: true, data: { challans: [], summary: { collected: 0, outstanding: 0, overdue: 0 } } });
     }
+    const requestedStudentId = params.get("studentId");
+    if (requestedStudentId) {
+      if (!isValidObjectId(requestedStudentId)) return NextResponse.json({ success: false, message: "Invalid student filter." }, { status: 400 });
+      if (studentIds && !studentIds.includes(requestedStudentId)) {
+        return NextResponse.json({ success: false, message: "Student not found or access denied." }, { status: user.role === "STUDENT" ? 403 : 404 });
+      }
+    }
     const studentFilter: Record<string, unknown> = {};
     if (studentIds) studentFilter._id = { $in: studentIds };
+    if (requestedStudentId) studentFilter._id = requestedStudentId;
     if (programId) studentFilter.program = programId;
     const matchingStudents = await Student.find(studentFilter).select("_id").lean();
     const query: Record<string, unknown> = { student: { $in: matchingStudents.map((student) => student._id) } };
@@ -136,6 +145,9 @@ export async function POST(request: NextRequest) {
         throw error;
       }
     }
+    await Promise.all(results.filter((item) => item.status === "created").map((item) => {
+      return notify({ studentId: item.student, type: "Challan", key: `challan:${item.student}:${periodMonth}`, detail: item.challanNo });
+    }));
     return NextResponse.json({ success: true, data: { results, created: results.filter((item) => item.status === "created").length, existing: results.filter((item) => item.status === "existing").length, skipped: students.length - results.length } }, { status: 201 });
   } catch (error) {
     console.error("POST /api/fees/challans failed:", error);

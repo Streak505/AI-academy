@@ -4,6 +4,7 @@ import { FeeChallan } from "@/models/FeeChallan";
 import { Payment } from "@/models/Payment";
 import { isValidObjectId } from "@/lib/validations";
 import { getCurrentUser } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -51,6 +52,12 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     else if (challan.pendingAmount > 0) challan.status = "Pending Verification";
     else challan.status = challan.dueDate < new Date() ? "Overdue" : "Unpaid";
     await challan.save();
+    await notify({
+      studentId: String(payment.student),
+      type: input.decision === "Verified" ? "PaymentVerified" : "PaymentRejected",
+      key: `payment:${payment._id}:${input.decision}`,
+      detail: `PKR ${payment.amount}${note ? ` — ${note}` : ""}`,
+    });
     return NextResponse.json({ success: true, data: { paymentId: String(payment._id), challanStatus: challan.status, paidAmount: challan.paidAmount } });
   } catch (error) {
     console.error("PATCH /api/fees/payments/[id] failed:", error);

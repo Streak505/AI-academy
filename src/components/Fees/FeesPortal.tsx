@@ -42,7 +42,7 @@ type Structure = {
   effectiveFrom: string;
 };
 type Summary = { collected: number; outstanding: number; overdue: number };
-type Props = { role: "ADMIN" | "STUDENT" | "PARENT" };
+type Props = { role: "ADMIN" | "STUDENT" | "PARENT"; selectedStudentId?: string };
 type FeeStructureForm = { program: string; monthlyFee: string; admissionFee: string; annualCharges: string; effectiveFrom: string };
 
 const emptyStructure: FeeStructureForm = { program: "", monthlyFee: "", admissionFee: "0", annualCharges: "0", effectiveFrom: new Date().toISOString().slice(0, 10) };
@@ -55,7 +55,7 @@ async function readApi<T>(response: Response): Promise<T> {
   return body.data;
 }
 
-export default function FeesPortal({ role }: Props) {
+export default function FeesPortal({ role, selectedStudentId = "" }: Props) {
   const isAdmin = role === "ADMIN";
   const [month, setMonth] = useState(monthNow);
   const [statusFilter, setStatusFilter] = useState("");
@@ -82,6 +82,7 @@ export default function FeesPortal({ role }: Props) {
     setError("");
     try {
       const params = new URLSearchParams({ month });
+      if (selectedStudentId) params.set("studentId", selectedStudentId);
       if (statusFilter) params.set("status", statusFilter);
       if (programFilter) params.set("program", programFilter);
       const challanData = await readApi<{ challans: Challan[]; summary: Summary }>(await fetch(`/api/fees/challans?${params}`, { cache: "no-store" }));
@@ -101,7 +102,7 @@ export default function FeesPortal({ role }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, month, programFilter, statusFilter]);
+  }, [isAdmin, month, programFilter, statusFilter, selectedStudentId]);
 
   useEffect(() => { void load(); }, [load]);
 
