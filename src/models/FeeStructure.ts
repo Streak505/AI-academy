@@ -12,5 +12,6 @@ const FeeStructureSchema = new Schema(
 );
 
 FeeStructureSchema.index({ program: 1, effectiveFrom: -1 });
+FeeStructureSchema.index({ program: 1, effectiveFrom: 1 }, { unique: true });
 
 export const FeeStructure = models.FeeStructure || model("FeeStructure", FeeStructureSchema);

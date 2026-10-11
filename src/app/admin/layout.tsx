@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/categories", label: "Categories", icon: "solar:layers-linear" },
   { href: "/admin/instructors", label: "Instructors", icon: "solar:users-group-rounded-linear" },
   { href: "/admin/applications", label: "Applications", icon: "solar:document-text-linear" },
+  { href: "/admin/fees", label: "Fees", icon: "solar:bill-list-linear" },
   { href: "/admin/events", label: "Events", icon: "solar:calendar-linear" },
   { href: "/admin/news", label: "News", icon: "solar:news-linear" },
   { href: "/admin/contact", label: "Messages", icon: "solar:letter-linear" },

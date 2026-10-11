@@ -21,6 +21,15 @@ export const academy = {
     widow_child: { defaultPercent: 0 }, // TODO_REPLACE with the academy-approved percentage.
     merit: { defaultPercent: 0 }, // TODO_REPLACE with the academy-approved percentage.
   },
+  payments: {
+    easyPaisa: { accountTitle: "TODO_REPLACE_ACCOUNT_TITLE", accountNumber: "TODO_REPLACE_EASYPAISA_NUMBER" },
+    jazzCash: { accountTitle: "TODO_REPLACE_ACCOUNT_TITLE", accountNumber: "TODO_REPLACE_JAZZCASH_NUMBER" },
+    bankTransfer: { accountTitle: "TODO_REPLACE_ACCOUNT_TITLE", bankName: "TODO_REPLACE_BANK_NAME", iban: "TODO_REPLACE_IBAN" },
+  },
+  fees: {
+    dueDay: 10,
+    lateFee: { type: "flat" as "flat" | "perDay", amount: 0, perDay: 0 },
+  },
   phone: "TODO_REPLACE_PHONE",
   whatsappNumber: "TODO_REPLACE_923001234567",
   email: "TODO_REPLACE_EMAIL",

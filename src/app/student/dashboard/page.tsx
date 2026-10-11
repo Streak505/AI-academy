@@ -62,7 +62,10 @@ export default async function StudentDashboardPage() {
             <h1 className="mt-2 text-4xl font-bold text-slate-900">Welcome, {user.name}</h1>
             <p className="mt-2 text-slate-600">Continue learning and track your course progress.</p>
           </div>
-          <Link href="/programs" className="no-underline rounded-full bg-violet-600 px-5 py-3 text-center font-semibold text-white hover:bg-violet-700">Browse courses</Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/student/fees" className="no-underline rounded-full bg-teal-700 px-5 py-3 text-center font-semibold text-white hover:bg-teal-800">My fees</Link>
+            <Link href="/programs" className="no-underline rounded-full bg-violet-600 px-5 py-3 text-center font-semibold text-white hover:bg-violet-700">Browse courses</Link>
+          </div>
         </div>
 
         <section className="mt-10">

@@ -12,6 +12,26 @@ export const ADMISSION_CONCESSION_TYPES = ["none", "orphan", "widow_child", "mer
 export const ADMISSION_STATUSES = ["Submitted", "UnderReview", "Approved", "Rejected", "Enrolled"] as const;
 export const ADMISSION_MAX_DOCUMENTS = 6;
 export const ADMISSION_MAX_DOCUMENT_SIZE = 4 * 1024 * 1024;
+export const PAYMENT_METHODS = ["EasyPaisa", "JazzCash", "BankTransfer"] as const;
+export const FEE_CHALLAN_STATUSES = ["Unpaid", "Pending Verification", "Paid", "Overdue", "Cancelled"] as const;
+
+export const feeStructureSchema = z.object({
+  program: z.string().regex(/^[a-fA-F0-9]{24}$/),
+  monthlyFee: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  admissionFee: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  annualCharges: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  effectiveFrom: z.string().date(),
+});
+
+export const feePaymentSchema = z.object({
+  challanId: z.string().regex(/^[a-fA-F0-9]{24}$/),
+  method: z.enum(PAYMENT_METHODS),
+  amount: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  transactionId: z.string().trim().min(1).max(120),
+  senderNumber: z.string().trim().max(30).regex(/^[+()\d\s-]*$/),
+});
+
+export const feeMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 
 const admissionText = (min: number, max: number, label: string) =>
   z.string().trim().min(min, `${label} is required.`).max(max, `${label} is too long.`);

@@ -32,7 +32,8 @@ export default async function ParentDashboardPage() {
       <section className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Parent portal</p>
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome, {user.name}</h1>
-        <p className="mt-3 text-slate-600">Parent tools for linked student records will be available here.</p>
+        <p className="mt-3 text-slate-600">Review fee records for students linked to your account.</p>
+        <Link href="/parent/fees" className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-3 font-semibold text-white">View linked students’ fees</Link>
         <Link href="/contact" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 font-semibold text-white">Contact the academy</Link>
         <section className="mt-10 border-t border-slate-200 pt-8">
           <h2 className="text-2xl font-bold text-slate-900">Counseling bookings</h2>
